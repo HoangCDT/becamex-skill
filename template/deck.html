@@ -1,0 +1,2903 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giải pháp Quản lý Đội xe</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&display=swap" />
+  <style>
+    /* === VIEWPORT BASE === */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; overflow-x: hidden; margin: 0; }
+    html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+    .slide {
+      width: 100vw; height: 100vh; height: 100dvh;
+      overflow: hidden; scroll-snap-align: start;
+      display: flex; flex-direction: column; position: relative;
+    }
+    .slide-content {
+      flex: 1; min-height: 0; width: 100%;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      align-items: stretch;
+      overflow: hidden;
+      padding:
+        var(--slide-padding-y)
+        var(--slide-padding-x)
+        var(--slide-padding-bottom);
+    }
+    :root {
+      --title-size: clamp(1.5rem, 5vw, 4rem);
+      --h3-size: clamp(1.05rem, 2.2vw, 1.55rem);
+      --body-size: clamp(0.88rem, 1.65vw, 1.22rem);
+      --small-size: clamp(0.78rem, 1.2vw, 0.98rem);
+      --slide-padding-x: clamp(1rem, 2.5vw, 2.25rem);
+      --slide-padding-y: clamp(0.75rem, 2vh, 1.5rem);
+      --slide-padding-bottom: clamp(3.25rem, 8vh, 4.75rem);
+      --title-badge-offset: clamp(3rem, 7.5vh, 4.25rem);
+      --content-gap: clamp(0.5rem, 1.5vw, 1.25rem);
+
+      /* Becamex Brand Colours - Digital */
+      --bg-deep: #FFFFFF;
+      --bg-card: #F8F8F8;
+      --border: rgba(220, 68, 5, 0.15);
+      --text-primary: #222222;
+      --text-secondary: #555555;
+      --content-weight: 400;
+      --emphasis-weight: 600;
+      --accent: #DC4405;
+      --accent-2: #692A5B;
+      --accent-3: #EEAF92;
+      --accent-4: #C9B6C3;
+      --accent-glow: rgba(220, 68, 5, 0.2);
+      --font-display: "Mitr", sans-serif;
+      --font-body: "Mitr", sans-serif;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @media (max-height: 700px) {
+      :root {
+        --slide-padding-x: clamp(0.75rem, 2vw, 1.5rem);
+        --slide-padding-y: clamp(0.5rem, 1.5vh, 1rem);
+        --slide-padding-bottom: clamp(2.75rem, 7vh, 3.75rem);
+        --h3-size: clamp(0.95rem, 2vw, 1.3rem);
+        --body-size: clamp(0.82rem, 1.45vw, 1.05rem);
+      }
+    }
+    @media (max-height: 600px) {
+      :root {
+        --slide-padding-x: clamp(0.5rem, 1.5vw, 1rem);
+        --slide-padding-y: clamp(0.35rem, 1vh, 0.75rem);
+        --slide-padding-bottom: clamp(2.5rem, 6vh, 3.25rem);
+        --body-size: clamp(0.78rem, 1.25vw, 0.95rem);
+      }
+    }
+    @media (max-width: 600px) {
+      :root {
+        --slide-padding-x: clamp(0.65rem, 3vw, 1rem);
+        --title-badge-offset: clamp(3.5rem, 10vh, 5rem);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+      }
+    }
+
+    /* === SLIDE BACKGROUND === */
+    .slide {
+      background: var(--bg-deep);
+      font-family: var(--font-body);
+      color: var(--text-primary);
+    }
+    .slide::before {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 20%, rgba(220,68,5,0.05) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 80%, rgba(105,42,91,0.04) 0%, transparent 55%),
+        linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
+      pointer-events: none;
+    }
+    .grid-lines {
+      position: absolute; inset: 0; opacity: 0.25;
+      background-image:
+        linear-gradient(rgba(51,51,51,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(51,51,51,0.06) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    /* === COVER SLIDE — ảnh nền full, nội dung đè lên === */
+    .slide-cover::before { display: none; }
+    .slide-cover .grid-lines { display: none; }
+
+    .cover-bg {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center;
+      z-index: 0;
+    }
+    .cover-logo {
+      position: absolute;
+      top: clamp(0.65rem, 2vh, 1.35rem);
+      left: clamp(0.85rem, 2.5vw, 2rem);
+      z-index: 3;
+      height: clamp(32px, 5vh, 52px);
+      width: auto;
+      max-width: min(48vw, 320px);
+      object-fit: contain;
+      object-position: left top;
+      pointer-events: none;
+    }
+    .cover-content {
+      position: relative; z-index: 2;
+      height: 100%;
+      width: 54%;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(1.25rem, 3.5vw, 3.25rem);
+      padding-left: clamp(1.75rem, 4.5vw, 4rem);
+      padding-bottom: clamp(1.5rem, 4vh, 3rem);
+    }
+    .cover-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      text-align: left;
+      max-width: min(92%, 560px);
+      padding-right: clamp(1rem, 4vw, 3rem);
+    }
+    .cover-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.85rem, 5.5vw, 4.25rem);
+      font-weight: 500;
+      color: var(--accent);
+      line-height: 1.15;
+      margin: 0 0 clamp(0.6rem, 1.5vh, 1.1rem);
+      letter-spacing: 0.01em;
+    }
+    .cover-title-line {
+      display: block;
+      white-space: nowrap;
+    }
+    .cover-subtitle {
+      font-family: var(--font-display);
+      font-size: clamp(0.9rem, 1.9vw, 1.35rem);
+      font-weight: 500;
+      color: #FFFFFF;
+      margin: 0;
+      line-height: 1.4;
+    }
+    .cover-org {
+      flex-shrink: 0;
+      text-align: left;
+    }
+    .cover-org-line {
+      font-family: var(--font-display);
+      font-size: clamp(0.8rem, 1.5vw, 1.15rem);
+      font-weight: 500;
+      color: var(--accent);
+      line-height: 1.45;
+      margin: 0;
+    }
+    .cover-org-line.underline {
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+
+    @media (max-width: 700px) {
+      .cover-content { width: 62%; }
+      .cover-logo {
+        height: clamp(26px, 4.2vh, 40px);
+        max-width: min(55vw, 240px);
+      }
+    }
+    @media (max-height: 600px) {
+      .cover-title { font-size: clamp(1.45rem, 4.5vw, 2.35rem); }
+      .cover-subtitle { font-size: clamp(0.75rem, 1.4vw, 0.95rem); }
+      .cover-logo { height: clamp(22px, 3.8vh, 34px); }
+    }
+
+    /* === HEADER — badge title cố định góc trái trên === */
+    .slide:not(.slide-cover):not(.slide-section):not(.slide-closing):not(.slide-toc) .slide-content {
+      position: relative;
+      padding-top: calc(var(--slide-padding-y) + var(--title-badge-offset));
+    }
+    .slide:not(.slide-cover):not(.slide-section):not(.slide-closing):not(.slide-toc) .slide-content > .header {
+      position: absolute;
+      top: var(--slide-padding-y);
+      left: var(--slide-padding-x);
+      z-index: 3;
+      margin: 0;
+      width: auto;
+      max-width: calc(100% - 2 * var(--slide-padding-x));
+    }
+    .header {
+      position: relative; z-index: 1;
+      flex-shrink: 0;
+      text-align: left;
+      width: 100%;
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: clamp(0.5rem, 1.2vw, 0.85rem);
+    }
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: clamp(0.25rem, 0.6vh, 0.45rem);
+      min-width: 0;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.5em;
+      font-size: var(--small-size); font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(220,68,5,0.08);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.35em 1em;
+      margin: 0;
+    }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+    .title-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: clamp(0.4rem, 0.8vw, 0.65rem);
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 4.5vw, 3rem);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: 0.02em;
+      color: var(--accent);
+      background: rgba(220, 68, 5, 0.08);
+      border: 1px solid var(--border);
+      border-radius: clamp(8px, 1vw, 14px);
+      padding: 0.22em 0.9em;
+      margin: 0;
+    }
+    .title-badge .badge-dot {
+      width: clamp(7px, 0.9vw, 10px);
+      height: clamp(7px, 0.9vw, 10px);
+      flex-shrink: 0;
+    }
+    .title-badge .title-chevron {
+      width: clamp(10px, 1.3vw, 16px);
+      height: clamp(24px, 3.8vh, 40px);
+      margin: 0;
+    }
+    .title-chevron {
+      width: clamp(12px, 1.6vw, 18px);
+      height: clamp(30px, 4.5vh, 48px);
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+    .title {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 4.5vw, 3rem);
+      font-weight: 600;
+      line-height: 1.15;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    /* === FOOTER === */
+    .slide-footer {
+      position: absolute;
+      bottom: clamp(0.75rem, 2vh, 1.35rem);
+      right: var(--slide-padding-x);
+      display: flex;
+      align-items: center;
+      gap: clamp(0.45rem, 1vw, 0.75rem);
+      z-index: 2;
+    }
+    .slide-number {
+      font-size: clamp(0.7rem, 1vw, 0.88rem);
+      font-weight: 300;
+      color: var(--accent);
+      min-width: 1em;
+      text-align: right;
+    }
+    .footer-divider {
+      width: 3px;
+      height: clamp(16px, 2.2vh, 24px);
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .footer-logo {
+      height: clamp(14px, 2vh, 20px);
+      width: auto;
+      object-fit: contain;
+    }
+
+    /* === FEATURE GRID 2x2 === */
+    .features {
+      position: relative; z-index: 1;
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: var(--content-gap);
+      width: 100%;
+      align-items: stretch;
+    }
+    @media (max-width: 700px) {
+      .features { grid-template-columns: 1fr; grid-template-rows: auto; }
+    }
+
+    .card {
+      display: flex;
+      gap: clamp(0.65rem, 1.3vw, 1.1rem);
+      align-items: flex-start;
+      height: auto;
+      background: var(--bg-card);
+      border: 1px solid rgba(51,51,51,0.08);
+      border-radius: clamp(10px, 1.2vw, 16px);
+      padding: clamp(1rem, 2vw, 1.5rem);
+      box-shadow: 0 2px 12px rgba(51, 51, 51, 0.06);
+      transition: border-color 0.3s var(--ease), transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+      max-height: none;
+    }
+    .card:hover {
+      border-color: rgba(220,68,5,0.35);
+      box-shadow: 0 6px 20px rgba(51, 51, 51, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .icon-wrap {
+      flex-shrink: 0;
+      width: clamp(44px, 6vw, 64px);
+      height: clamp(44px, 6vw, 64px);
+      border-radius: clamp(10px, 1vw, 14px);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .icon-wrap svg {
+      width: clamp(22px, 3vw, 32px);
+      height: clamp(22px, 3vw, 32px);
+    }
+    #slide-context .icon-wrap,
+    #slide-content .icon-wrap,
+    #slide-benefits .icon-wrap,
+    #slide-scope .icon-wrap {
+      width: clamp(64px, 9vw, 96px);
+      height: clamp(64px, 9vw, 96px);
+      border-radius: clamp(12px, 1.3vw, 18px);
+    }
+    #slide-context .icon-wrap svg,
+    #slide-content .icon-wrap svg,
+    #slide-benefits .icon-wrap svg,
+    #slide-scope .icon-wrap svg {
+      width: clamp(34px, 4.8vw, 50px);
+      height: clamp(34px, 4.8vw, 50px);
+    }
+    #slide-context .card-num,
+    #slide-content .card-num,
+    #slide-benefits .card-num,
+    #slide-scope .card-num {
+      width: clamp(22px, 2.6vw, 28px);
+      height: clamp(22px, 2.6vw, 28px);
+      font-size: clamp(0.68rem, 1vw, 0.82rem);
+      top: -7px;
+      right: -7px;
+    }
+    .icon-wrap.c1 { background: linear-gradient(135deg, rgba(220,68,5,0.15), rgba(220,68,5,0.05)); border: 1px solid rgba(220,68,5,0.25); }
+    .icon-wrap.c2 { background: linear-gradient(135deg, rgba(105,42,91,0.15), rgba(105,42,91,0.05)); border: 1px solid rgba(105,42,91,0.25); }
+    .icon-wrap.c3 { background: linear-gradient(135deg, rgba(238,175,146,0.35), rgba(238,175,146,0.12)); border: 1px solid rgba(238,175,146,0.5); }
+    .icon-wrap.c4 { background: linear-gradient(135deg, rgba(201,182,195,0.35), rgba(201,182,195,0.12)); border: 1px solid rgba(201,182,195,0.5); }
+
+    .card-num {
+      position: absolute; top: -6px; right: -6px;
+      width: clamp(18px, 2.2vw, 22px); height: clamp(18px, 2.2vw, 22px);
+      border-radius: 50%;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: clamp(0.6rem, 0.9vw, 0.72rem);
+      font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+    }
+    .card:nth-child(2) .card-num { background: var(--accent-2); }
+    .card:nth-child(3) .card-num { background: #c97a4a; }
+    .card:nth-child(4) .card-num { background: #9a7a8e; }
+
+    .card-body { flex: 1; min-width: 0; }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: var(--h3-size);
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: clamp(0.25rem, 0.6vh, 0.45rem);
+      line-height: 1.25;
+    }
+    .card-desc {
+      font-size: var(--body-size);
+      font-weight: var(--content-weight);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .card-desc strong { color: var(--text-primary); font-weight: var(--emphasis-weight); }
+
+    /* === NUMBERED POINTS 2×2 === */
+    .point-card { align-items: flex-start; }
+    .point-card .card-desc { margin: 0; flex: 1; min-width: 0; }
+
+    /* === REVEAL ANIMATION === */
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+    }
+    .slide.visible .reveal { opacity: 1; transform: translateY(0); }
+    .reveal:nth-child(1) { transition-delay: 0.05s; }
+    .reveal:nth-child(2) { transition-delay: 0.15s; }
+    .reveal:nth-child(3) { transition-delay: 0.25s; }
+    .reveal:nth-child(4) { transition-delay: 0.35s; }
+    .header .reveal { transition-delay: 0s; }
+
+    /* === EXTENDED SLIDES (giới thiệu KH) === */
+    .header-compact { margin-bottom: 0; }
+    .slide-lead {
+      position: relative; z-index: 1;
+      font-size: var(--body-size); font-weight: var(--content-weight);
+      color: var(--text-secondary); line-height: 1.45;
+      width: 100%;
+      margin: 0 0 clamp(0.5rem, 1.2vh, 0.85rem);
+      flex-shrink: 0;
+    }
+    .slide-lead strong { color: var(--text-primary); font-weight: var(--emphasis-weight); }
+    .slide-visual { justify-content: center; }
+
+    /* Khối nội dung: full width slide, frame/box theo kích thước nội dung */
+    .slide-content > .features,
+    .slide-content > .swimlane,
+    .slide-content > .integration-flow,
+    .slide-content > .step-strip,
+    .slide-content > .waterfall,
+    .slide-content > .dispatch-layout {
+      flex: 0 0 auto;
+      width: 100%;
+    }
+    .slide-content > .toc-nav {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+    }
+    .slide-content > .driver-grid,
+    .slide-content > .module-grid {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+    }
+    /* Ảnh: dùng không gian còn lại nhưng khung ảnh vẫn ôm theo tỷ lệ */
+    .slide-content > .image-duo,
+    .slide-content > .image-quad {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      align-content: center;
+    }
+
+    .swimlane {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: clamp(0.45rem, 1vw, 0.75rem);
+      align-items: start;
+      width: 100%;
+    }
+    .lane {
+      background: #F8F4F2; border: 1px solid rgba(51,51,51,0.12);
+      border-radius: clamp(8px, 1vw, 12px);
+      display: flex; flex-direction: column;
+      height: auto;
+    }
+    .lane-head {
+      background: var(--accent); color: #fff;
+      text-align: center; font-weight: 600;
+      font-size: clamp(1rem, 1.65vw, 1.3rem);
+      padding: 0.6em 0.7em; flex-shrink: 0;
+    }
+    .lane-body {
+      padding: clamp(0.55rem, 1.1vw, 0.85rem);
+      display: flex; flex-direction: column; gap: clamp(0.4rem, 0.8vh, 0.55rem);
+    }
+    /* Mũi tên ngang giữa cột — căn ngang hàng header */
+    .lane-arrow,
+    .integration-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: start;
+      flex-shrink: 0;
+      color: var(--accent);
+      box-sizing: border-box;
+      font-size: clamp(1rem, 1.65vw, 1.3rem);
+      line-height: 1.3;
+      min-height: calc(1.3em + 1.2em);
+      padding-top: 0.6em;
+      padding-bottom: 0.6em;
+    }
+    .lane-arrow {
+      padding-left: 0.1em;
+      padding-right: 0.1em;
+    }
+    .lane-arrow svg {
+      width: clamp(1.6rem, 3.2vw, 2.4rem);
+      height: clamp(1.6rem, 3.2vw, 2.4rem);
+      display: block;
+    }
+    .flow-box {
+      background: #fff; border: 1.5px solid rgba(220,68,5,0.4);
+      border-radius: clamp(6px, 0.8vw, 9px);
+      padding: clamp(0.55em, 1vw, 0.75em) clamp(0.6em, 1.1vw, 0.85em);
+      text-align: center;
+      font-size: clamp(0.92rem, 1.4vw, 1.15rem);
+      font-weight: 500;
+      line-height: 1.4; color: var(--text-primary);
+    }
+    .flow-box small {
+      display: block; color: var(--text-secondary); font-weight: var(--content-weight);
+      margin-top: 0.22em;
+      font-size: clamp(0.82rem, 1.15vw, 0.98rem);
+    }
+    .flow-box.hl { background: var(--accent-2); color: #fff; border-color: var(--accent-2); }
+    .flow-box.gps { background: #E8F5E9; border-color: #2E7D32; color: #2E7D32; }
+    .flow-arrow {
+      text-align: center; color: var(--accent);
+      font-size: clamp(1rem, 1.6vw, 1.3rem);
+      line-height: 1; font-weight: 600;
+    }
+
+    .integration-flow {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: clamp(0.5rem, 1.2vw, 0.85rem);
+      align-items: start;
+      width: 100%;
+    }
+    .system-frame {
+      background: #F8F4F2; border: 1.5px solid rgba(51,51,51,0.12);
+      border-radius: clamp(8px, 1vw, 12px);
+      display: flex; flex-direction: column;
+      height: auto;
+    }
+    .system-frame.fast { border-color: rgba(105,42,91,0.35); }
+    .system-head {
+      text-align: center; font-weight: 600;
+      font-size: clamp(1rem, 1.55vw, 1.28rem);
+      padding: 0.6em 0.7em; flex-shrink: 0; color: #fff;
+    }
+    .system-frame.becatruck .system-head { background: var(--accent); }
+    .system-frame.fast .system-head { background: var(--accent-2); }
+    .system-body {
+      padding: clamp(0.75rem, 1.3vw, 1.1rem);
+      display: flex; flex-direction: column; gap: clamp(0.45rem, 0.9vh, 0.6rem);
+      align-items: stretch;
+    }
+    .system-action {
+      background: #fff; border: 1.5px solid rgba(220,68,5,0.4);
+      border-radius: clamp(6px, 0.8vw, 9px);
+      padding: clamp(0.65em, 1.1vw, 0.85em) clamp(0.7em, 1.2vw, 0.95em);
+      text-align: center;
+      font-size: clamp(0.92rem, 1.35vw, 1.12rem);
+      font-weight: 500;
+      line-height: 1.4; color: var(--text-primary);
+    }
+    .system-frame.fast .system-action {
+      border-color: rgba(105,42,91,0.35);
+    }
+    .system-action.export {
+      border-color: var(--accent);
+      background: rgba(220,68,5,0.06);
+      font-weight: var(--emphasis-weight);
+    }
+    .system-action.import {
+      border-color: var(--accent-2);
+      background: rgba(105,42,91,0.06);
+      font-weight: var(--emphasis-weight);
+    }
+    .integration-arrow {
+      flex-direction: column;
+      gap: 0.25em;
+      padding-left: 0.15em;
+      padding-right: 0.15em;
+      font-size: clamp(1rem, 1.55vw, 1.28rem);
+    }
+    .integration-arrow svg {
+      width: clamp(1.8rem, 3.5vw, 2.6rem);
+      height: clamp(1.8rem, 3.5vw, 2.6rem);
+      display: block;
+      flex-shrink: 0;
+    }
+    .integration-arrow span {
+      font-size: clamp(0.72rem, 1vw, 0.85rem);
+      font-weight: 500; color: var(--text-secondary);
+      text-align: center; max-width: 6.5em; line-height: 1.25;
+    }
+
+    .step-strip {
+      position: relative; z-index: 1;
+      display: grid; gap: clamp(0.4rem, 0.9vw, 0.6rem);
+      width: 100%;
+    }
+    .step-strip.cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .step-strip.cols-6 { grid-template-columns: repeat(6, 1fr); }
+    .step-box {
+      background: #fff; border: 1px solid rgba(220,68,5,0.3);
+      border-radius: 8px; padding: 0.5em 0.55em;
+      font-size: clamp(0.78rem, 1.2vw, 0.98rem);
+      font-weight: 500;
+      line-height: 1.35; text-align: center; color: var(--text-primary);
+    }
+    .step-box strong { color: var(--accent); font-weight: 600; }
+
+    .image-duo, .image-quad {
+      position: relative; z-index: 1;
+      display: grid; gap: clamp(0.45rem, 1vw, 0.7rem);
+      width: 100%;
+      align-items: center;
+      justify-items: center;
+    }
+    .image-duo { grid-template-columns: 1fr 1fr; }
+    .image-quad { grid-template-columns: repeat(4, 1fr); }
+    .shot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 100%;
+    }
+    .shot img {
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      max-height: min(calc(100dvh - 13rem), 640px);
+      object-fit: contain; object-position: center center;
+      border-radius: clamp(6px, 0.8vw, 10px);
+      border: 1px solid rgba(51,51,51,0.08);
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(51,51,51,0.06);
+    }
+    .shot-caption {
+      flex-shrink: 0;
+      font-size: clamp(0.72rem, 1.05vw, 0.88rem);
+      font-weight: 500;
+      color: var(--text-secondary); text-align: center; margin-top: 0.25em;
+    }
+
+    .slide-section {
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .slide-section::before {
+      background:
+        radial-gradient(ellipse 70% 55% at 15% 20%, rgba(220, 68, 5, 0.09) 0%, transparent 58%),
+        radial-gradient(ellipse 60% 50% at 88% 78%, rgba(105, 42, 91, 0.08) 0%, transparent 55%),
+        linear-gradient(135deg, rgba(220, 68, 5, 0.05), rgba(105, 42, 91, 0.04));
+    }
+    .section-deco {
+      position: absolute;
+      z-index: 0;
+      pointer-events: none;
+      border: 2px solid rgba(220, 68, 5, 0.22);
+      border-radius: clamp(12px, 1.5vw, 20px);
+      opacity: 0.55;
+    }
+    .section-deco-tl {
+      top: clamp(1.25rem, 4vh, 2.75rem);
+      left: clamp(1rem, 3vw, 2.5rem);
+      width: clamp(3.5rem, 8vw, 6.5rem);
+      height: clamp(3.5rem, 8vw, 6.5rem);
+      border-right: none;
+      border-bottom: none;
+    }
+    .section-deco-br {
+      bottom: clamp(3.5rem, 9vh, 5rem);
+      right: clamp(1rem, 3vw, 2.5rem);
+      width: clamp(3.5rem, 8vw, 6.5rem);
+      height: clamp(3.5rem, 8vw, 6.5rem);
+      border-left: none;
+      border-top: none;
+      border-color: rgba(105, 42, 91, 0.28);
+    }
+    .section-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.55rem, 1.4vh, 1rem);
+      padding: clamp(1.75rem, 4vw, 3rem) clamp(2rem, 5vw, 4rem);
+      max-width: min(92vw, 720px);
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(220, 68, 5, 0.18);
+      border-radius: clamp(16px, 2vw, 24px);
+      box-shadow:
+        0 8px 32px rgba(51, 51, 51, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+      backdrop-filter: blur(6px);
+    }
+    .section-inner::before,
+    .section-inner::after {
+      content: "";
+      position: absolute;
+      width: clamp(48px, 7vw, 80px);
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 2px;
+      opacity: 0.85;
+    }
+    .section-inner::before {
+      top: clamp(0.85rem, 2vh, 1.25rem);
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .section-inner::after {
+      bottom: clamp(0.85rem, 2vh, 1.25rem);
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0.45;
+      width: clamp(32px, 5vw, 56px);
+    }
+    .section-logo {
+      height: clamp(28px, 4.5vh, 48px);
+      width: auto;
+      object-fit: contain;
+      margin-bottom: clamp(0.15rem, 0.5vh, 0.35rem);
+    }
+    .section-rule {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.5rem, 1.2vw, 0.85rem);
+      width: 100%;
+      max-width: 420px;
+    }
+    .section-rule-line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(220, 68, 5, 0.45), transparent);
+      border-radius: 1px;
+    }
+    .section-chevron {
+      width: clamp(14px, 1.8vw, 22px);
+      height: clamp(32px, 4.5vh, 52px);
+      object-fit: contain;
+      flex-shrink: 0;
+      opacity: 0.9;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 5vw, 3.2rem);
+      font-weight: 600;
+      color: var(--accent);
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      letter-spacing: 0.04em;
+      line-height: 1.15;
+    }
+    .section-divider {
+      width: clamp(3rem, 12vw, 5.5rem);
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-3), var(--accent-2));
+      opacity: 0.9;
+    }
+    .section-sub {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2.2vw, 1.45rem);
+      font-weight: 600;
+      color: var(--accent-2);
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      line-height: 1.35;
+    }
+    .section-tags {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.35rem, 0.8vw, 0.55rem);
+      margin-top: clamp(0.25rem, 0.8vh, 0.55rem);
+    }
+    .section-tag {
+      font-size: clamp(0.68rem, 1vw, 0.82rem);
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(220, 68, 5, 0.08);
+      border: 1px solid rgba(220, 68, 5, 0.22);
+      border-radius: 999px;
+      padding: 0.35em 0.85em;
+      letter-spacing: 0.02em;
+    }
+    .section-tag:nth-child(2) {
+      color: var(--accent-2);
+      background: rgba(105, 42, 91, 0.08);
+      border-color: rgba(105, 42, 91, 0.22);
+    }
+    .section-tag:nth-child(3) {
+      color: #9a5c38;
+      background: rgba(238, 175, 146, 0.22);
+      border-color: rgba(201, 122, 74, 0.35);
+    }
+
+    .slide-closing {
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .slide-closing::before { display: none; }
+    .slide-closing .grid-lines { display: none; }
+    .slide-closing .cover-bg { z-index: 0; }
+    .closing-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.5rem, 1.5vh, 1rem);
+      padding: clamp(1rem, 3vw, 2rem);
+    }
+    .closing-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.25rem, 7vw, 5rem);
+      font-weight: 600;
+      color: var(--accent);
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      line-height: 1.1;
+      text-shadow: 0 2px 24px rgba(255, 255, 255, 0.85);
+    }
+    .closing-org {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2.2vw, 1.65rem);
+      font-weight: var(--emphasis-weight);
+      color: #FFFFFF;
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    @media (max-width: 900px) {
+      .swimlane {
+        grid-template-columns: 1fr;
+      }
+      .integration-flow {
+        grid-template-columns: 1fr;
+      }
+      .lane-arrow,
+      .integration-arrow { padding-top: 0.35em; padding-bottom: 0.35em; }
+      .lane-arrow svg,
+      .integration-arrow svg { transform: rotate(90deg); }
+      .step-strip.cols-4, .step-strip.cols-6 { grid-template-columns: repeat(2, 1fr); }
+      .image-quad { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px) {
+      .step-strip.cols-4, .step-strip.cols-6 { grid-template-columns: 1fr; }
+      .title-badge { font-size: clamp(1.15rem, 5vw, 1.6rem); }
+    }
+    @media (max-height: 700px) {
+      .card { padding: clamp(0.55rem, 1.2vw, 0.85rem); }
+    }
+
+    #slide-dispatch .dispatch-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.28fr);
+      gap: clamp(0.65rem, 1.4vw, 1.1rem);
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      align-items: center;
+    }
+    #slide-dispatch .waterfall {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.2rem, 0.45vh, 0.35rem);
+      width: 100%;
+      padding-right: clamp(0.25rem, 0.6vw, 0.5rem);
+    }
+    #slide-dispatch .wf-step {
+      display: flex;
+      align-items: center;
+      gap: clamp(0.55rem, 1.1vw, 0.85rem);
+      width: fit-content;
+      max-width: 100%;
+      padding: clamp(0.65rem, 1.2vw, 0.95rem) clamp(0.7rem, 1.3vw, 1rem);
+      background: var(--bg-card);
+      border: 1px solid rgba(51, 51, 51, 0.08);
+      border-radius: clamp(10px, 1.1vw, 14px);
+      box-shadow: 0 2px 12px rgba(51, 51, 51, 0.06);
+    }
+    #slide-dispatch .wf-step.wf-1 { margin-left: 0; }
+    #slide-dispatch .wf-step.wf-2 { margin-left: clamp(1rem, 4.5vw, 2.75rem); }
+    #slide-dispatch .wf-step.wf-3 { margin-left: clamp(2rem, 9vw, 5.5rem); }
+    #slide-dispatch .wf-step.wf-4 { margin-left: clamp(3rem, 13.5vw, 8.25rem); }
+    #slide-dispatch .wf-connector {
+      color: var(--accent);
+      font-size: clamp(1rem, 1.6vw, 1.3rem);
+      font-weight: 600;
+      line-height: 1;
+      width: fit-content;
+    }
+    #slide-dispatch .wf-connector.c-1 { margin-left: clamp(2.5rem, 10vw, 5rem); }
+    #slide-dispatch .wf-connector.c-2 { margin-left: clamp(3.5rem, 14vw, 7.5rem); }
+    #slide-dispatch .wf-connector.c-3 { margin-left: clamp(4.5rem, 18vw, 10rem); }
+    #slide-dispatch .wf-icon {
+      flex-shrink: 0;
+      width: clamp(52px, 7.5vw, 76px);
+      height: clamp(52px, 7.5vw, 76px);
+      border-radius: clamp(12px, 1.2vw, 16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    #slide-dispatch .wf-icon svg {
+      width: clamp(28px, 4vw, 40px);
+      height: clamp(28px, 4vw, 40px);
+    }
+    #slide-dispatch .wf-icon.c1 { background: linear-gradient(135deg, rgba(220,68,5,0.15), rgba(220,68,5,0.05)); border: 1px solid rgba(220,68,5,0.25); }
+    #slide-dispatch .wf-icon.c2 { background: linear-gradient(135deg, rgba(105,42,91,0.15), rgba(105,42,91,0.05)); border: 1px solid rgba(105,42,91,0.25); }
+    #slide-dispatch .wf-icon.c3 { background: linear-gradient(135deg, rgba(238,175,146,0.35), rgba(238,175,146,0.12)); border: 1px solid rgba(238,175,146,0.5); }
+    #slide-dispatch .wf-icon.c4 { background: linear-gradient(135deg, rgba(201,182,195,0.35), rgba(201,182,195,0.12)); border: 1px solid rgba(201,182,195,0.5); }
+    #slide-dispatch .wf-num {
+      position: absolute;
+      top: -7px; right: -7px;
+      width: clamp(22px, 2.6vw, 28px);
+      height: clamp(22px, 2.6vw, 28px);
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: clamp(0.72rem, 1.05vw, 0.88rem);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #slide-dispatch .wf-step.wf-2 .wf-num { background: var(--accent-2); }
+    #slide-dispatch .wf-step.wf-3 .wf-num { background: #c97a4a; }
+    #slide-dispatch .wf-step.wf-4 .wf-num { background: #9a7a8e; }
+    #slide-dispatch .wf-text {
+      margin: 0;
+      font-size: clamp(0.88rem, 1.35vw, 1.08rem);
+      font-weight: var(--content-weight);
+      line-height: 1.4;
+      color: var(--text-secondary);
+      text-align: left;
+    }
+    #slide-dispatch .wf-text strong { color: var(--text-primary); font-weight: var(--emphasis-weight); }
+    #slide-dispatch .image-stack {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.5rem, 1vh, 0.75rem);
+      width: 100%;
+      min-height: 0;
+      flex: 1;
+      align-self: stretch;
+    }
+    #slide-dispatch .shot {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      border: 2px solid rgba(220, 68, 5, 0.45);
+      border-radius: clamp(8px, 1vw, 12px);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 3px 16px rgba(51, 51, 51, 0.1);
+    }
+    #slide-dispatch .shot img {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      max-height: min(calc((100dvh - 13rem) / 2 - 0.6rem), 360px);
+      object-fit: contain;
+      object-position: center center;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: #fff;
+      padding: clamp(0.35rem, 0.6vw, 0.5rem);
+    }
+    #slide-dispatch .shot-caption {
+      flex-shrink: 0;
+      margin: 0;
+      padding: 0.4em 0.55em;
+      font-size: clamp(0.78rem, 1.15vw, 0.95rem);
+      font-weight: var(--emphasis-weight);
+      color: var(--accent);
+      text-align: center;
+      background: rgba(220, 68, 5, 0.07);
+      border-top: 2px solid rgba(220, 68, 5, 0.25);
+    }
+
+    @media (max-width: 900px) {
+      #slide-dispatch .dispatch-layout {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+      #slide-dispatch .wf-step.wf-2 { margin-left: clamp(0.75rem, 3.5vw, 1.5rem); }
+      #slide-dispatch .wf-step.wf-3 { margin-left: clamp(1.5rem, 7vw, 3rem); }
+      #slide-dispatch .wf-step.wf-4 { margin-left: clamp(2.25rem, 10.5vw, 4.5rem); }
+      #slide-dispatch .wf-connector.c-1 { margin-left: clamp(1.75rem, 8vw, 3.5rem); }
+      #slide-dispatch .wf-connector.c-2 { margin-left: clamp(2.5rem, 11vw, 5rem); }
+      #slide-dispatch .wf-connector.c-3 { margin-left: clamp(3.25rem, 14vw, 6.5rem); }
+    }
+
+    /* Module grid — Tài xế (4) / Giám sát (6) */
+    #slide-driver .slide-content,
+    #slide-supervisor-flow .slide-content,
+    #slide-supervisor-flow-2 .slide-content {
+      padding-top: calc(var(--slide-padding-y) + var(--title-badge-offset) + clamp(0.35rem, 1vh, 0.55rem));
+      padding-bottom: clamp(2.75rem, 7vh, 3.75rem);
+      justify-content: flex-start;
+    }
+    #slide-driver .module-grid,
+    #slide-supervisor-flow .module-grid,
+    #slide-supervisor-flow-2 .module-grid {
+      margin-top: clamp(0.55rem, 1.6vh, 1.1rem);
+    }
+
+    /* Hướng phát triển — 3 cột */
+    #slide-roadmap .features {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: auto;
+    }
+    #slide-roadmap .icon-wrap {
+      width: clamp(64px, 9vw, 96px);
+      height: clamp(64px, 9vw, 96px);
+      border-radius: clamp(12px, 1.3vw, 18px);
+    }
+    #slide-roadmap .icon-wrap svg {
+      width: clamp(34px, 4.8vw, 50px);
+      height: clamp(34px, 4.8vw, 50px);
+    }
+    #slide-roadmap .card-num {
+      width: clamp(22px, 2.6vw, 28px);
+      height: clamp(22px, 2.6vw, 28px);
+      font-size: clamp(0.68rem, 1vw, 0.82rem);
+      top: -7px;
+      right: -7px;
+    }
+    @media (max-width: 900px) {
+      #slide-roadmap .features { grid-template-columns: 1fr; }
+    }
+    .module-grid {
+      display: grid;
+      gap: clamp(0.4rem, 0.9vw, 0.65rem);
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      align-items: stretch;
+    }
+    .module-grid.cols-4 {
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: 1fr;
+      height: min(calc(100dvh - 10.5rem), 780px);
+      max-height: calc(100dvh - 10.5rem);
+    }
+    .module-grid.cols-3 {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      height: min(calc(100dvh - 10.5rem), 820px);
+      max-height: calc(100dvh - 10.5rem);
+    }
+    .module-grid.cols-3-row {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: 1fr;
+      height: min(calc(100dvh - 10.5rem), 780px);
+      max-height: calc(100dvh - 10.5rem);
+    }
+    .module-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: 100%;
+      border: 2px solid rgba(220, 68, 5, 0.45);
+      border-radius: clamp(8px, 1vw, 12px);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 3px 16px rgba(51, 51, 51, 0.1);
+    }
+    .module-head {
+      display: flex;
+      align-items: center;
+      gap: clamp(0.35rem, 0.65vw, 0.5rem);
+      padding: clamp(0.3rem, 0.65vw, 0.45rem) clamp(0.4rem, 0.75vw, 0.55rem);
+      background: rgba(220, 68, 5, 0.07);
+      border-bottom: 2px solid rgba(220, 68, 5, 0.25);
+      flex-shrink: 0;
+    }
+    .module-icon {
+      flex-shrink: 0;
+      width: clamp(32px, 4.2vw, 44px);
+      height: clamp(32px, 4.2vw, 44px);
+      border-radius: clamp(8px, 0.9vw, 10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .module-icon svg {
+      width: clamp(18px, 2.6vw, 24px);
+      height: clamp(18px, 2.6vw, 24px);
+    }
+    .module-icon.c1 { background: linear-gradient(135deg, rgba(220,68,5,0.15), rgba(220,68,5,0.05)); border: 1px solid rgba(220,68,5,0.25); }
+    .module-icon.c2 { background: linear-gradient(135deg, rgba(105,42,91,0.15), rgba(105,42,91,0.05)); border: 1px solid rgba(105,42,91,0.25); }
+    .module-icon.c3 { background: linear-gradient(135deg, rgba(238,175,146,0.35), rgba(238,175,146,0.12)); border: 1px solid rgba(238,175,146,0.5); }
+    .module-icon.c4 { background: linear-gradient(135deg, rgba(201,182,195,0.35), rgba(201,182,195,0.12)); border: 1px solid rgba(201,182,195,0.5); }
+    .module-num {
+      position: absolute;
+      top: -6px; right: -6px;
+      width: clamp(20px, 2.4vw, 24px);
+      height: clamp(20px, 2.4vw, 24px);
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: clamp(0.65rem, 0.95vw, 0.78rem);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .module-card:nth-child(6n+2) .module-num,
+    .module-card:nth-child(6n+6) .module-num { background: var(--accent-2); }
+    .module-card:nth-child(6n+3) .module-num { background: #c97a4a; }
+    .module-card:nth-child(6n+4) .module-num { background: #9a7a8e; }
+    .module-label {
+      margin: 0;
+      font-size: clamp(0.65rem, 0.95vw, 0.8rem);
+      font-weight: var(--emphasis-weight);
+      line-height: 1.3;
+      color: var(--text-primary);
+      text-align: left;
+    }
+    .module-shot {
+      flex: 1 1 auto;
+      min-height: 0;
+      margin: 0;
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+      padding: clamp(0.15rem, 0.3vw, 0.25rem);
+      background: #fff;
+      overflow: hidden;
+    }
+    .module-shot img {
+      flex: 1 1 auto;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      max-width: 100%;
+      max-height: none;
+      object-fit: contain;
+      object-position: center center;
+      display: block;
+    }
+    @media (max-width: 900px) {
+      .module-grid.cols-4,
+      .module-grid.cols-3,
+      .module-grid.cols-3-row {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: auto;
+        grid-auto-rows: minmax(min(34vh, 320px), 1fr);
+        height: auto;
+        max-height: none;
+      }
+    }
+    @media (max-width: 520px) {
+      .module-grid.cols-4,
+      .module-grid.cols-3,
+      .module-grid.cols-3-row {
+        grid-template-columns: 1fr;
+        grid-auto-rows: minmax(min(30vh, 280px), auto);
+      }
+    }
+
+    /* === TABLE OF CONTENTS === */
+    .slide-toc .slide-content {
+      position: relative;
+      justify-content: flex-start;
+      align-items: stretch;
+      gap: 0;
+      padding-top: calc(var(--slide-padding-y) + var(--title-badge-offset));
+      padding-bottom: var(--slide-padding-bottom);
+    }
+    .slide-toc .slide-content > .header {
+      position: absolute;
+      top: var(--slide-padding-y);
+      left: var(--slide-padding-x);
+      flex-shrink: 0;
+      width: auto;
+      max-width: calc(100% - 2 * var(--slide-padding-x));
+      z-index: 3;
+      margin: 0;
+    }
+    .slide-toc .slide-footer {
+      z-index: 5;
+    }
+    .toc-nav {
+      flex: 0 1 auto;
+      width: 100%;
+      max-width: none;
+      overflow: hidden;
+      margin-top: clamp(1.25rem, 3.5vh, 2.25rem);
+      padding-top: clamp(0.35rem, 0.8vh, 0.65rem);
+    }
+    .toc-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas:
+        "overview features"
+        "roadmap roadmap";
+      gap: clamp(0.85rem, 1.8vw, 1.5rem) clamp(1.25rem, 3vw, 3rem);
+      align-content: center;
+    }
+    .toc-section-overview { grid-area: overview; }
+    .toc-section-features { grid-area: features; }
+    .toc-section-roadmap {
+      grid-area: roadmap;
+      padding-top: clamp(0.25rem, 0.6vh, 0.5rem);
+      border-top: 1px solid rgba(220, 68, 5, 0.15);
+    }
+    .toc-section-head {
+      margin: 0 0 clamp(0.5rem, 1vh, 0.75rem);
+      font-size: clamp(1.15rem, 2.35vw, 1.65rem);
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1.3;
+    }
+    .toc-section-head.is-link {
+      display: block;
+      width: 100%;
+      font-family: var(--font-body);
+      text-align: left;
+      background: transparent;
+      border: none;
+      padding: clamp(0.25rem, 0.5vh, 0.4rem) 0;
+      cursor: pointer;
+      transition: color 0.2s var(--ease);
+    }
+    .toc-section-head.is-link:hover,
+    .toc-section-head.is-link:focus-visible {
+      color: var(--accent-2);
+      outline: none;
+    }
+    .toc-section-features .toc-section-head { color: var(--accent-2); }
+    .toc-section-roadmap .toc-section-head { color: #9a5c42; margin-bottom: 0; }
+    .toc-roman {
+      font-weight: 700;
+      margin-right: 0.15em;
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0 clamp(1rem, 2vw, 1.5rem);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.3rem, 0.65vh, 0.48rem);
+    }
+    .toc-item { margin: 0; }
+    .toc-link {
+      display: flex;
+      align-items: baseline;
+      gap: clamp(0.4rem, 0.85vw, 0.65rem);
+      width: 100%;
+      padding: clamp(0.28rem, 0.55vh, 0.4rem) 0;
+      font-family: var(--font-body);
+      font-size: clamp(1rem, 1.85vw, 1.22rem);
+      font-weight: 400;
+      line-height: 1.4;
+      color: var(--text-primary);
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      cursor: pointer;
+      text-align: left;
+      transition: color 0.2s var(--ease);
+    }
+    .toc-link:hover,
+    .toc-link:focus-visible {
+      color: var(--accent);
+      outline: none;
+    }
+    .toc-section-features .toc-link:hover,
+    .toc-section-features .toc-link:focus-visible { color: var(--accent-2); }
+    .toc-num {
+      flex-shrink: 0;
+      min-width: 1.25em;
+      font-size: 1em;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .toc-num::after { content: "."; }
+    .toc-label {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    @media (max-width: 720px) {
+      .toc-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "overview"
+          "features"
+          "roadmap";
+        gap: clamp(0.65rem, 1.2vh, 0.9rem);
+      }
+    }
+    @media (max-height: 700px) {
+      .toc-section-head { font-size: clamp(1.05rem, 2vw, 1.35rem); }
+      .toc-link { font-size: clamp(0.92rem, 1.55vw, 1.08rem); }
+      .toc-list { gap: 0.22rem; }
+    }
+
+    /* === SLIDE NAVIGATION === */
+    .slide-nav {
+      position: fixed;
+      bottom: clamp(0.75rem, 2vh, 1.25rem);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: clamp(0.35rem, 0.8vw, 0.55rem);
+      z-index: 100;
+      padding: 0.35rem 0.45rem;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(220, 68, 5, 0.2);
+      border-radius: 999px;
+      box-shadow: 0 4px 20px rgba(51, 51, 51, 0.12);
+      backdrop-filter: blur(8px);
+    }
+    .slide-nav-btn {
+      font-family: var(--font-body);
+      font-size: clamp(0.68rem, 1vw, 0.82rem);
+      font-weight: 500;
+      color: var(--accent);
+      background: #fff;
+      border: 1px solid rgba(220, 68, 5, 0.35);
+      border-radius: 999px;
+      padding: 0.45em 1em;
+      cursor: pointer;
+      transition: background 0.2s var(--ease), color 0.2s var(--ease), opacity 0.2s var(--ease);
+      white-space: nowrap;
+    }
+    .slide-nav-btn:hover:not(:disabled) {
+      background: var(--accent);
+      color: #fff;
+    }
+    .slide-nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .slide-nav-indicator {
+      font-size: clamp(0.65rem, 0.95vw, 0.78rem);
+      font-weight: 400;
+      color: var(--text-secondary);
+      padding: 0 0.35em;
+      min-width: 3.5em;
+      text-align: center;
+      user-select: none;
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: rgba(220, 68, 5, 0.35);
+      text-underline-offset: 0.15em;
+    }
+    .slide-nav-divider {
+      width: 1px;
+      height: 1.35em;
+      background: rgba(220, 68, 5, 0.22);
+      flex-shrink: 0;
+    }
+    .slide-nav-fullscreen {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35em;
+    }
+    .slide-nav-fullscreen .fs-icon {
+      font-size: 1.05em;
+      line-height: 1;
+    }
+    .slide-nav-goto {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35em;
+    }
+    .slide-nav-export {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35em;
+    }
+
+    /* === SLIDE OVERVIEW === */
+    .slide-overview {
+      position: fixed;
+      inset: 0;
+      z-index: 220;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(0.75rem, 2.5vw, 1.75rem);
+    }
+    .slide-overview.is-open {
+      display: flex;
+    }
+    .slide-overview-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(18, 18, 18, 0.74);
+      backdrop-filter: blur(8px);
+    }
+    .slide-overview-dialog {
+      position: relative;
+      z-index: 1;
+      width: min(96vw, 1120px);
+      max-height: min(92vh, 920px);
+      background: #fff;
+      border-radius: clamp(12px, 1.2vw, 18px);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.38);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(220, 68, 5, 0.18);
+    }
+    .slide-overview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: clamp(0.7rem, 1.5vh, 1rem) clamp(0.9rem, 2vw, 1.35rem);
+      border-bottom: 1px solid rgba(220, 68, 5, 0.14);
+      flex-shrink: 0;
+    }
+    .slide-overview-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .slide-overview-hint {
+      margin: 0;
+      font-size: clamp(0.68rem, 1vw, 0.8rem);
+      color: var(--text-secondary);
+    }
+    .slide-overview-close {
+      font-family: var(--font-body);
+      font-size: clamp(0.68rem, 1vw, 0.82rem);
+      font-weight: 500;
+      color: var(--accent);
+      background: #fff;
+      border: 1px solid rgba(220, 68, 5, 0.35);
+      border-radius: 999px;
+      padding: 0.4em 0.95em;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .slide-overview-close:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+    .slide-overview-grid {
+      padding: clamp(0.75rem, 1.5vh, 1.1rem) clamp(0.9rem, 2vw, 1.35rem);
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr));
+      gap: clamp(0.65rem, 1.2vw, 0.9rem);
+    }
+    .slide-tile {
+      display: flex;
+      flex-direction: column;
+      border: 2px solid rgba(51, 51, 51, 0.08);
+      border-radius: clamp(8px, 0.9vw, 12px);
+      padding: clamp(0.3rem, 0.6vw, 0.45rem);
+      background: #fafafa;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
+    }
+    .slide-tile:hover {
+      border-color: rgba(220, 68, 5, 0.45);
+      transform: translateY(-2px);
+    }
+    .slide-tile.is-current {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(220, 68, 5, 0.18);
+      background: rgba(220, 68, 5, 0.04);
+    }
+    .slide-tile-preview {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 6px;
+      background: #fff;
+      border: 1px solid rgba(51, 51, 51, 0.1);
+      position: relative;
+    }
+    .slide-tile-scale {
+      width: 1280px;
+      height: 720px;
+      transform-origin: 0 0;
+      pointer-events: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .slide-export-clone {
+      overflow: hidden !important;
+      position: relative !important;
+      scroll-snap-align: none !important;
+      flex-shrink: 0 !important;
+      box-sizing: border-box !important;
+    }
+    .slide-tile-clone {
+      width: 1280px !important;
+      height: 720px !important;
+      min-height: 720px !important;
+    }
+    .slide-export-clone,
+    .slide-export-clone .reveal {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+
+    /* === PDF EXPORT (snapshot print) === */
+    #print-root {
+      position: fixed;
+      left: -200vw;
+      top: 0;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      pointer-events: none;
+      visibility: hidden;
+      z-index: -1;
+    }
+    .print-page {
+      box-sizing: border-box;
+      overflow: hidden;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .print-page-scale {
+      transform-origin: center center;
+      flex-shrink: 0;
+    }
+    .print-slide-clone {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .slide-tile-label {
+      display: block;
+      margin-top: 0.42rem;
+      font-size: clamp(0.66rem, 0.95vw, 0.78rem);
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.35;
+    }
+    .slide-tile-num {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    @media print {
+      @page {
+        size: 297mm 167mm;
+        margin: 0;
+      }
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      html {
+        scroll-snap-type: none !important;
+        scroll-behavior: auto !important;
+        height: auto !important;
+      }
+      body {
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
+      }
+      body > *:not(#print-root) {
+        display: none !important;
+      }
+      #print-root {
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        width: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+        visibility: visible !important;
+        pointer-events: none !important;
+        z-index: auto !important;
+      }
+      .print-page {
+        width: 297mm;
+        height: 167mm;
+        page-break-after: always;
+        break-after: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .print-page:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Trang 1: Bìa -->
+  <section class="slide slide-cover" id="slide-cover">
+    <img class="cover-bg" src="becatruck-assets/cover-slide-bg.png" alt="" />
+    <img class="cover-logo" src="becatruck-assets/cover-logo.png" alt="BECAMEX GROUP" />
+    <div class="cover-content">
+      <div class="cover-main reveal">
+        <h1 class="cover-title">
+          <span class="cover-title-line">Hệ thống quản lý</span>
+          <span class="cover-title-line">Đội xe thi công</span>
+        </h1>
+        <p class="cover-subtitle">Giải pháp số hóa vận hành đội xe</p>
+      </div>
+      <div class="cover-org reveal">
+        <p class="cover-org-line">BECAMEX GROUP</p>
+        <p class="cover-org-line underline">Trung tâm chuyển đổi số</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trang 2: Mục lục -->
+  <section class="slide slide-toc" id="slide-toc">
+    <div class="grid-lines"></div>
+    <div class="slide-content">
+      <header class="header">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Nội dung trình bày
+          </h1>
+        </div>
+      </header>
+      <nav class="toc-nav reveal" aria-label="Mục lục trình bày">
+        <div class="toc-layout" id="toc-layout"></div>
+      </nav>
+    </div>
+    <footer class="slide-footer">
+      <span class="slide-number">2</span>
+      <span class="footer-divider" aria-hidden="true"></span>
+      <img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" />
+    </footer>
+  </section>
+
+  <!-- Trang 3: Bối cảnh & Thách thức -->
+  <section class="slide" id="slide-context">
+    <div class="grid-lines"></div>
+
+    <div class="slide-content">
+      <header class="header">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Thách thức vận hành
+          </h1>
+        </div>
+      </header>
+
+      <div class="features">
+        <article class="card point-card reveal">
+          <div class="icon-wrap c1">
+            <span class="card-num">1</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#DC4405" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 6h11v8H1z"/>
+              <path d="M12 9h5l3 3v2h-8V9z"/>
+              <circle cx="4.5" cy="17" r="2"/>
+              <circle cx="17.5" cy="17" r="2"/>
+              <path d="M7 3v3M10 3v3"/>
+            </svg>
+          </div>
+          <p class="card-desc">
+            Đơn vị thi công ngày càng cần <strong>minh bạch, chính xác và hiệu quả</strong> trong quản lý đội xe nội bộ.
+          </p>
+        </article>
+
+        <article class="card point-card reveal">
+          <div class="icon-wrap c2">
+            <span class="card-num">2</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#692A5B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 2h6a1 1 0 0 1 1 1v1H8V3a1 1 0 0 1 1-1z"/>
+              <rect x="5" y="4" width="14" height="18" rx="2"/>
+              <line x1="9" y1="10" x2="15" y2="10"/>
+              <line x1="9" y1="14" x2="15" y2="14"/>
+              <line x1="9" y1="18" x2="12" y2="18"/>
+              <path d="M15.5 17.5l3 3"/>
+              <path d="M18 16l1 1-2.5 2.5-2-1 2.5-2.5z"/>
+            </svg>
+          </div>
+          <p class="card-desc">
+            Quy trình thủ công: <strong>lập phiếu điều xe, ghi nhận chuyến, xác nhận khối lượng</strong> — dễ chậm trễ và sai lệch.
+          </p>
+        </article>
+
+        <article class="card point-card reveal">
+          <div class="icon-wrap c3">
+            <span class="card-num">3</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c97a4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+              <path d="M3 21c2-3 5-4 9-4s7 1 9 4" opacity="0.45"/>
+              <circle cx="19" cy="5" r="3"/>
+              <line x1="19" y1="3.5" x2="19" y2="6.5"/>
+              <line x1="17.5" y1="5" x2="20.5" y2="5"/>
+            </svg>
+          </div>
+          <p class="card-desc">
+            Khó theo dõi <strong>hành trình thực tế</strong>, đối chiếu chi phí vận hành và tính lương tài xế kịp thời.
+          </p>
+        </article>
+
+        <article class="card point-card reveal">
+          <div class="icon-wrap c4">
+            <span class="card-num">4</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#9a7a8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <ellipse cx="7" cy="6" rx="5" ry="2"/>
+              <path d="M2 6v6c0 1.1 2.24 2 5 2s5-.9 5-2V6"/>
+              <ellipse cx="17" cy="14" rx="5" ry="2"/>
+              <path d="M12 14v6c0 1.1 2.24 2 5 2s5-.9 5-2v-6"/>
+              <path d="M10 9l4 3" stroke-dasharray="2 2"/>
+              <line x1="9" y1="11" x2="11" y2="13" opacity="0.5"/>
+            </svg>
+          </div>
+          <p class="card-desc">
+            Dữ liệu phân tán giữa hiện trường và kế toán, thiếu <strong>hệ thống giám sát &amp; phê duyệt tập trung</strong>.
+          </p>
+        </article>
+      </div>
+    </div>
+
+    <footer class="slide-footer">
+      <span class="slide-number">3</span>
+      <span class="footer-divider" aria-hidden="true"></span>
+      <img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" />
+    </footer>
+  </section>
+
+  <!-- Trang 4: Giải pháp -->
+  <section class="slide" id="slide-content">
+    <div class="grid-lines"></div>
+
+    <div class="slide-content">
+      <header class="header">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Giải pháp quản lý đội xe
+          </h1>
+        </div>
+      </header>
+
+      <div class="features">
+        <article class="card reveal">
+          <div class="icon-wrap c1">
+            <span class="card-num">1</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#DC4405" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="5" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="19" cy="6" r="2"/>
+              <path d="M7 6h4M13 6h4"/>
+              <circle cx="8.5" cy="18" r="2"/><circle cx="15.5" cy="18" r="2"/>
+              <path d="M7 6v4a2 2 0 0 0 2 2h1v4M17 6v4a2 2 0 0 1-2 2h-1v4"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Số hóa toàn trình vận hành</h3>
+            <p class="card-desc">
+              Từ <strong>lập lệnh điều xe</strong> → thực hiện chuyến → giám sát → <strong>tổng hợp chi phí</strong> trên một hệ thống thống nhất.
+            </p>
+          </div>
+        </article>
+
+        <article class="card reveal">
+          <div class="icon-wrap c2">
+            <span class="card-num">2</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#692A5B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+              <path d="M2 20h20" opacity="0.4"/>
+              <path d="M6 20l2-4M18 20l-2-4" opacity="0.4"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Ghi nhận GPS &amp; hành trình</h3>
+            <p class="card-desc">
+              Tự động theo dõi <strong>từng phiếu xe</strong> — minh bạch, có căn cứ đối chiếu khi cần kiểm tra.
+            </p>
+          </div>
+        </article>
+
+        <article class="card reveal">
+          <div class="icon-wrap c3">
+            <span class="card-num">3</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c97a4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2"/>
+              <line x1="12" y1="18" x2="12" y2="18.01" stroke-width="2.5"/>
+              <rect x="2" y="5" width="7" height="5" rx="1" opacity="0.5"/>
+              <rect x="15" y="14" width="7" height="5" rx="1" opacity="0.5"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">App di động &amp; nền tảng Web</h3>
+            <p class="card-desc">
+              <strong>App cho tài xế</strong> thực hiện chuyến; <strong>Web cho điều xe, giám sát và kế toán</strong> quản trị tập trung.
+            </p>
+          </div>
+        </article>
+
+        <article class="card reveal">
+          <div class="icon-wrap c4">
+            <span class="card-num">4</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#9a7a8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+              <path d="M16 3h3a2 2 0 0 1 2 2v3"/>
+              <path d="M8 21H5a2 2 0 0 1-2-2v-3"/>
+              <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+              <path d="M12 8v8M9 11h6"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Tích hợp hệ thống FAST</h3>
+            <p class="card-desc">
+              Đồng bộ dữ liệu tự động phục vụ <strong>tính chi phí vận hành</strong> và <strong>lương tài xế</strong>.
+            </p>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <footer class="slide-footer">
+      <span class="slide-number">4</span>
+      <span class="footer-divider" aria-hidden="true"></span>
+      <img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" />
+    </footer>
+  </section>
+
+  <!-- Trang 5: Lợi ích mang lại -->
+  <section class="slide" id="slide-benefits">
+    <div class="grid-lines"></div>
+
+    <div class="slide-content">
+      <header class="header">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Lợi ích triển khai
+          </h1>
+        </div>
+      </header>
+
+      <div class="features">
+        <article class="card reveal">
+          <div class="icon-wrap c1">
+            <span class="card-num">1</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#DC4405" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="7" y="2" width="10" height="20" rx="2"/>
+              <path d="M9 12l2 2 4-4"/>
+              <path d="M4 8h2M4 12h2M18 8h2M18 12h2" opacity="0.45"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Tối ưu nhập liệu</h3>
+            <p class="card-desc">
+              Giảm thao tác thủ công, thông tin vận hành được <strong>ghi nhận tự động từ hiện trường</strong>.
+            </p>
+          </div>
+        </article>
+
+        <article class="card reveal">
+          <div class="icon-wrap c2">
+            <span class="card-num">2</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#692A5B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+              <circle cx="8" cy="10" r="1.5" fill="#692A5B"/>
+              <circle cx="12" cy="8" r="1.5" fill="#692A5B"/>
+              <circle cx="16" cy="11" r="1.5" fill="#692A5B"/>
+              <path d="M6 14h12"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Giám sát tập trung</h3>
+            <p class="card-desc">
+              Theo dõi, phê duyệt và báo cáo trên <strong>một hệ thống</strong> — rõ ràng từng vai trò.
+            </p>
+          </div>
+        </article>
+
+        <article class="card reveal">
+          <div class="icon-wrap c3">
+            <span class="card-num">3</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c97a4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Kiểm soát chi phí</h3>
+            <p class="card-desc">
+              Hạn chế sai lệch, gian lận; <strong>dữ liệu GPS &amp; phiếu xe</strong> làm căn cứ xác thực.
+            </p>
+          </div>
+        </article>
+
+        <article class="card reveal">
+          <div class="icon-wrap c4">
+            <span class="card-num">4</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#9a7a8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 2v6h6"/>
+              <path d="M8 13h8M8 17h5"/>
+              <path d="M16 3l4 4-2 2-4-4"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Tích hợp kế toán</h3>
+            <p class="card-desc">
+              Kết xuất — nhập <strong>FAST</strong> thuận tiện, phục vụ quyết toán và tính lương chính xác.
+            </p>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <footer class="slide-footer">
+      <span class="slide-number">5</span>
+      <span class="footer-divider" aria-hidden="true"></span>
+      <img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" />
+    </footer>
+  </section>
+
+  <!-- Trang 6: Phạm vi & Người dùng -->
+  <section class="slide" id="slide-scope">
+    <div class="grid-lines"></div>
+    <div class="slide-content">
+      <header class="header header-compact">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Phạm vi &amp; người dùng
+          </h1>
+        </div>
+      </header>
+      <p class="slide-lead reveal">Áp dụng cho toàn bộ <strong>đội xe thi công nội bộ</strong> (xe ben, xe nước, xe cơ giới…).</p>
+      <div class="features">
+        <article class="card point-card reveal">
+          <div class="icon-wrap c1"><span class="card-num">1</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#DC4405" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+          </div>
+          <p class="card-desc"><strong>Nhân viên Điều xe</strong> — lập lịch, tạo lệnh điều xe trên web.</p>
+        </article>
+        <article class="card point-card reveal">
+          <div class="icon-wrap c2"><span class="card-num">2</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#692A5B" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <p class="card-desc"><strong>Tài xế</strong> — nhận lệnh, thực hiện chuyến, ghi nhận GPS qua app di động.</p>
+        </article>
+        <article class="card point-card reveal">
+          <div class="icon-wrap c3"><span class="card-num">3</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c97a4a" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          </div>
+          <p class="card-desc"><strong>Giám sát</strong> — kiểm tra hành trình, xác nhận khối lượng/cự ly, phê duyệt phiếu.</p>
+        </article>
+        <article class="card point-card reveal">
+          <div class="icon-wrap c4"><span class="card-num">4</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#9a7a8e" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+          </div>
+          <p class="card-desc"><strong>Kế toán</strong> — tổng hợp dữ liệu, đồng bộ sang FAST để hạch toán và báo cáo.</p>
+        </article>
+      </div>
+    </div>
+    <footer class="slide-footer"><span class="slide-number">6</span><span class="footer-divider" aria-hidden="true"></span><img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" /></footer>
+  </section>
+
+  <!-- Trang 7: Luồng nghiệp vụ -->
+  <section class="slide" id="slide-flow">
+    <div class="grid-lines"></div>
+    <div class="slide-content slide-visual">
+      <header class="header header-compact">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Luồng nghiệp vụ
+          </h1>
+        </div>
+      </header>
+      <div class="swimlane reveal">
+        <div class="lane">
+          <div class="lane-head">Điều xe</div>
+          <div class="lane-body">
+            <div class="flow-box">Lên lịch điều xe<small>Xe – Dự trù – Công tác – Số chuyến – Khối lượng – Cự ly</small></div>
+          </div>
+        </div>
+        <div class="lane-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </div>
+        <div class="lane">
+          <div class="lane-head">Tài xế</div>
+          <div class="lane-body">
+            <div class="flow-box">Chọn phiếu xe</div><div class="flow-arrow">↓</div>
+            <div class="flow-box">Bấm Bắt Đầu</div><div class="flow-arrow">↓</div>
+            <div class="flow-box">Bấm Kết Thúc</div><div class="flow-arrow">↓</div>
+            <div class="flow-box hl">Ghi chú / thêm ảnh / file đính kèm</div>
+            <div class="flow-box gps">App ghi nhận GPS &amp; hành trình theo phiếu xe</div>
+          </div>
+        </div>
+        <div class="lane-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </div>
+        <div class="lane">
+          <div class="lane-head">Giám sát</div>
+          <div class="lane-body">
+            <div class="flow-box">Kiểm tra và xác nhận<small>Ghi chú khối lượng, cự ly nếu sai khác</small></div><div class="flow-arrow">↓</div>
+            <div class="flow-box">Xem lại hành trình GPS</div><div class="flow-arrow">↓</div>
+            <div class="flow-box">Thay đổi thông tin nếu chưa chính xác</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="slide-footer"><span class="slide-number">7</span><span class="footer-divider" aria-hidden="true"></span><img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" /></footer>
+  </section>
+
+  <section class="slide" id="slide-fast">
+    <div class="grid-lines"></div>
+    <div class="slide-content slide-visual">
+      <header class="header header-compact">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Tích hợp FAST
+          </h1>
+        </div>
+      </header>
+      <div class="integration-flow reveal">
+        <div class="system-frame becatruck">
+          <div class="system-head">Hệ thống quản lý đội xe</div>
+          <div class="system-body">
+            <div class="system-action export">Kết xuất dữ liệu</div>
+          </div>
+        </div>
+        <div class="integration-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+          <span>Dữ liệu phiếu xe</span>
+        </div>
+        <div class="system-frame fast">
+          <div class="system-head">Hệ thống FAST</div>
+          <div class="system-body">
+            <div class="system-action import">Import dữ liệu phiếu xe</div>
+            <div class="flow-arrow">↓</div>
+            <div class="system-action">Đổ dữ liệu báo cáo như bình thường</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="slide-footer"><span class="slide-number">8</span><span class="footer-divider" aria-hidden="true"></span><img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" /></footer>
+  </section>
+
+  <section class="slide slide-section" id="slide-section-features">
+    <div class="grid-lines"></div>
+    <div class="section-deco section-deco-tl" aria-hidden="true"></div>
+    <div class="section-deco section-deco-br" aria-hidden="true"></div>
+    <div class="section-inner reveal">
+      <img class="section-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" />
+      <div class="section-rule" aria-hidden="true">
+        <span class="section-rule-line"></span>
+        <img class="section-chevron" src="becatruck-assets/chevron.png" alt="" />
+        <span class="section-rule-line"></span>
+      </div>
+      <h2 class="section-title">TÍNH NĂNG NỔI BẬT</h2>
+      <div class="section-divider" aria-hidden="true"></div>
+      <p class="section-sub">Giao diện &amp; Trải nghiệm người dùng</p>
+      <div class="section-tags" aria-hidden="true">
+        <span class="section-tag">Điều xe</span>
+        <span class="section-tag">Tài xế</span>
+        <span class="section-tag">Giám sát</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trang 9–13: Module UI + Kết -->
+  <section class="slide" id="slide-dispatch">
+    <div class="grid-lines"></div>
+    <div class="slide-content slide-visual">
+      <header class="header header-compact">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Điều xe — Lập lệnh
+          </h1>
+        </div>
+      </header>
+      <div class="dispatch-layout reveal">
+        <div class="waterfall">
+          <article class="wf-step wf-1">
+            <div class="wf-icon c1">
+              <span class="wf-num">1</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#DC4405" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+            </div>
+            <p class="wf-text">Lên lịch &amp; tạo lệch theo <strong>công trình, dự trù, công tác</strong></p>
+          </article>
+          <div class="wf-connector c-1" aria-hidden="true">↓</div>
+          <article class="wf-step wf-2">
+            <div class="wf-icon c2">
+              <span class="wf-num">2</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#692A5B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/>
+              </svg>
+            </div>
+            <p class="wf-text">Khai báo <strong>xe, số chuyến, khối lượng, cự ly</strong></p>
+          </article>
+          <div class="wf-connector c-2" aria-hidden="true">↓</div>
+          <article class="wf-step wf-3">
+            <div class="wf-icon c3">
+              <span class="wf-num">3</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#c97a4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+              </svg>
+            </div>
+            <p class="wf-text">Theo dõi <strong>trạng thái phiếu</strong> thời gian thực</p>
+          </article>
+          <div class="wf-connector c-3" aria-hidden="true">↓</div>
+          <article class="wf-step wf-4">
+            <div class="wf-icon c4">
+              <span class="wf-num">4</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#9a7a8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            <p class="wf-text">Xem chi tiết, chỉnh sửa &amp; <strong>lịch sử lệnh</strong></p>
+          </article>
+        </div>
+        <div class="image-stack">
+          <figure class="shot">
+            <img src="becatruck-assets/pdf/page08-img1.png" alt="Lập lệnh điều xe" />
+            <figcaption class="shot-caption">Lập lệnh điều xe</figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="becatruck-assets/pdf/page09-img1.png" alt="Chi tiết lệnh điều xe" />
+            <figcaption class="shot-caption">Chi tiết lệnh điều xe</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+    <footer class="slide-footer"><span class="slide-number">10</span><span class="footer-divider" aria-hidden="true"></span><img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" /></footer>
+  </section>
+
+  <section class="slide" id="slide-driver">
+    <div class="grid-lines"></div>
+    <div class="slide-content slide-visual">
+      <header class="header header-compact">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Tài xế — App di động
+          </h1>
+        </div>
+      </header>
+      <div class="module-grid cols-4 reveal">
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c1">
+              <span class="module-num">1</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#DC4405" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/>
+              </svg>
+            </div>
+            <p class="module-label">DS lệnh điều xe</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page11-img1.jpeg" alt="Bước 1 — Danh sách lệnh" />
+          </figure>
+        </article>
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c2">
+              <span class="module-num">2</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#692A5B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4V8z"/>
+              </svg>
+            </div>
+            <p class="module-label">Chọn lệnh &amp; Bắt đầu</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page11-img2.jpeg" alt="Bước 2 — Bắt đầu chuyến" />
+          </figure>
+        </article>
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c3">
+              <span class="module-num">3</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#c97a4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10.01-3-3"/>
+              </svg>
+            </div>
+            <p class="module-label">Thực hiện &amp; Kết thúc chuyến</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page11-img3.jpeg" alt="Bước 3 — Kết thúc chuyến" />
+          </figure>
+        </article>
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c4">
+              <span class="module-num">4</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#9a7a8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p class="module-label">Gửi phiếu — Ghi chú &amp; đính kèm</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page11-img4.jpeg" alt="Bước 4 — Gửi phiếu" />
+          </figure>
+        </article>
+      </div>
+    </div>
+    <footer class="slide-footer"><span class="slide-number">11</span><span class="footer-divider" aria-hidden="true"></span><img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" /></footer>
+  </section>
+
+  <section class="slide" id="slide-supervisor-flow">
+    <div class="grid-lines"></div>
+    <div class="slide-content slide-visual">
+      <header class="header header-compact">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Giám sát — Kiểm tra chuyến
+          </h1>
+        </div>
+      </header>
+      <div class="module-grid cols-3-row reveal">
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c1">
+              <span class="module-num">1</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#DC4405" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/>
+              </svg>
+            </div>
+            <p class="module-label">Danh sách lệnh điều xe</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page13-img1.jpeg" alt="Bước 1 — Danh sách lệnh" />
+          </figure>
+        </article>
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c2">
+              <span class="module-num">2</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#692A5B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/>
+              </svg>
+            </div>
+            <p class="module-label">Chọn phiếu cần duyệt</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page13-img2.jpeg" alt="Bước 2 — Chọn phiếu" />
+          </figure>
+        </article>
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c3">
+              <span class="module-num">3</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#c97a4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/>
+              </svg>
+            </div>
+            <p class="module-label">Kiểm tra thông tin chuyến</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page13-img3.jpeg" alt="Bước 3 — Kiểm tra thông tin" />
+          </figure>
+        </article>
+      </div>
+    </div>
+    <footer class="slide-footer"><span class="slide-number">12</span><span class="footer-divider" aria-hidden="true"></span><img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" /></footer>
+  </section>
+
+  <section class="slide" id="slide-supervisor-flow-2">
+    <div class="grid-lines"></div>
+    <div class="slide-content slide-visual">
+      <header class="header header-compact">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Giám sát — Phê duyệt phiếu
+          </h1>
+        </div>
+      </header>
+      <div class="module-grid cols-3-row reveal">
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c4">
+              <span class="module-num">4</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#9a7a8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <p class="module-label">Kiểm tra tuyến GPS</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page14-img1.jpeg" alt="Bước 4 — Tuyến GPS" />
+          </figure>
+        </article>
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c1">
+              <span class="module-num">5</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#DC4405" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 3v18"/><path d="M5 8h4a3 3 0 0 1 0 6H5"/><path d="M19 10h-4a3 3 0 0 0 0 6h4"/>
+              </svg>
+            </div>
+            <p class="module-label">Đối chiếu cự ly &amp; khối lượng</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page14-img2.jpeg" alt="Bước 5 — Cự ly và khối lượng" />
+          </figure>
+        </article>
+        <article class="module-card">
+          <div class="module-head">
+            <div class="module-icon c2">
+              <span class="module-num">6</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#692A5B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10.01-3-3"/>
+              </svg>
+            </div>
+            <p class="module-label">Xác nhận — chỉnh sửa trong 24h</p>
+          </div>
+          <figure class="module-shot">
+            <img src="becatruck-assets/pdf/page14-img3.jpeg" alt="Bước 6 — Xác nhận phiếu" />
+          </figure>
+        </article>
+      </div>
+    </div>
+    <footer class="slide-footer"><span class="slide-number">13</span><span class="footer-divider" aria-hidden="true"></span><img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" /></footer>
+  </section>
+
+  <section class="slide" id="slide-roadmap">
+    <div class="grid-lines"></div>
+    <div class="slide-content">
+      <header class="header header-compact">
+        <div class="title-row reveal">
+          <h1 class="title-badge">
+            <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+            Hướng phát triển
+          </h1>
+        </div>
+      </header>
+      <p class="slide-lead reveal">Mở rộng phạm vi áp dụng và tinh chỉnh quy trình sau giai đoạn triển khai ban đầu, phù hợp với thực tế vận hành sau sáp nhập.</p>
+      <div class="features">
+        <article class="card point-card reveal">
+          <div class="icon-wrap c1"><span class="card-num">1</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#DC4405" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>
+            </svg>
+          </div>
+          <p class="card-desc"><strong>Phạm vi hiện tại</strong> — Hệ thống đang phục vụ quy trình cho <strong>xe vận tải</strong>; đây là nhóm phương tiện được triển khai và vận hành trong giai đoạn đầu.</p>
+        </article>
+        <article class="card point-card reveal">
+          <div class="icon-wrap c2"><span class="card-num">2</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#692A5B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><path d="M12 12v4"/><path d="M8 12h8"/>
+            </svg>
+          </div>
+          <p class="card-desc"><strong>Chưa phát triển</strong> — <strong>Xe bồn</strong> và <strong>xe cơ giới</strong> chưa được phát triển trên hệ thống.</p>
+        </article>
+        <article class="card point-card reveal">
+          <div class="icon-wrap c3"><span class="card-num">3</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c97a4a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>
+            </svg>
+          </div>
+          <p class="card-desc"><strong>Khảo sát sau sáp nhập</strong> — Sau khi <strong>Xí nghiệp Giao thông</strong> sáp nhập <strong>Becamex BCE</strong>, rà soát lại xe vận tải, xe cơ giới và xe bồn để đánh giá khác biệt và điều chỉnh quy trình cho phù hợp.</p>
+        </article>
+      </div>
+    </div>
+    <footer class="slide-footer"><span class="slide-number">14</span><span class="footer-divider" aria-hidden="true"></span><img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" /></footer>
+  </section>
+
+  <section class="slide slide-closing" id="slide-closing">
+    <img class="cover-bg" src="becatruck-assets/cover-slide-bg.png" alt="" />
+    <div class="closing-content">
+      <h2 class="closing-title reveal">Cảm ơn!</h2>
+    </div>
+  </section>
+
+  <nav class="slide-nav" aria-label="Điều hướng slide">
+    <button type="button" class="slide-nav-btn" id="btn-prev" aria-label="Slide trước">← Trước</button>
+    <span class="slide-nav-indicator" id="slide-indicator" aria-live="polite" title="Chọn slide (G)">1 / 15</span>
+    <button type="button" class="slide-nav-btn" id="btn-next" aria-label="Slide tiếp">Tiếp →</button>
+    <span class="slide-nav-divider slide-nav-divider-goto" aria-hidden="true"></span>
+    <button type="button" class="slide-nav-btn slide-nav-goto" id="btn-goto" aria-label="Chọn slide" title="Chọn slide (G)">
+      <span aria-hidden="true">⊞</span>
+      <span>Slides</span>
+    </button>
+    <span class="slide-nav-divider" aria-hidden="true"></span>
+    <button type="button" class="slide-nav-btn slide-nav-fullscreen" id="btn-fullscreen" aria-label="Thuyết trình toàn màn hình" title="Toàn màn hình (F)">
+      <span class="fs-icon" aria-hidden="true">⛶</span>
+      <span class="fs-label">Toàn màn hình</span>
+    </button>
+    <span class="slide-nav-divider" aria-hidden="true"></span>
+    <button type="button" class="slide-nav-btn slide-nav-export" id="btn-export-pdf" aria-label="Xuất PDF" title="Xuất PDF (Ctrl+P)">
+      <span aria-hidden="true">↓</span>
+      <span>PDF</span>
+    </button>
+  </nav>
+
+  <div id="print-root" aria-hidden="true"></div>
+
+  <div class="slide-overview" id="slide-overview" hidden aria-hidden="true">
+    <div class="slide-overview-backdrop" id="slide-overview-backdrop"></div>
+    <div class="slide-overview-dialog" role="dialog" aria-modal="true" aria-labelledby="slide-overview-title">
+      <div class="slide-overview-header">
+        <div>
+          <h2 class="slide-overview-title" id="slide-overview-title">Chọn slide</h2>
+          <p class="slide-overview-hint">Bấm tile để nhảy tới slide · Esc để đóng</p>
+        </div>
+        <button type="button" class="slide-overview-close" id="btn-overview-close">Đóng</button>
+      </div>
+      <div class="slide-overview-grid" id="slide-overview-grid"></div>
+    </div>
+  </div>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    const btnGoto = document.getElementById('btn-goto');
+    const indicator = document.getElementById('slide-indicator');
+    const overview = document.getElementById('slide-overview');
+    const overviewGrid = document.getElementById('slide-overview-grid');
+    const overviewBackdrop = document.getElementById('slide-overview-backdrop');
+    const btnOverviewClose = document.getElementById('btn-overview-close');
+    const btnExportPdf = document.getElementById('btn-export-pdf');
+    const STORAGE_KEY = 'becamex-slide:' + (location.pathname.split('/').pop() || 'deck');
+    const TILE_REF_W = 1280;
+    const TILE_REF_H = 720;
+
+    let overviewOpen = false;
+    let overviewBuilt = false;
+
+    function loadSlideIndex() {
+      try {
+        const saved = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+        if (!Number.isNaN(saved) && saved >= 0 && saved < slides.length) return saved;
+      } catch (_) { /* private mode / blocked storage */ }
+      return 0;
+    }
+
+    function saveSlideIndex(index) {
+      try {
+        localStorage.setItem(STORAGE_KEY, String(index));
+      } catch (_) {}
+    }
+
+    let currentIndex = loadSlideIndex();
+
+    function goToSlide(index, smooth = true) {
+      currentIndex = Math.max(0, Math.min(slides.length - 1, index));
+      slides[currentIndex].scrollIntoView({
+        behavior: smooth ? 'smooth' : 'instant',
+        block: 'start',
+      });
+      saveSlideIndex(currentIndex);
+      updateNav();
+    }
+
+    function updateNav() {
+      btnPrev.disabled = currentIndex === 0;
+      btnNext.disabled = currentIndex === slides.length - 1;
+      indicator.textContent = `${currentIndex + 1} / ${slides.length}`;
+      updateOverviewHighlight();
+    }
+
+    function getSlideLabel(slide, index) {
+      const badge = slide.querySelector('.title-badge');
+      if (badge) return badge.textContent.replace(/\s+/g, ' ').trim();
+      const section = slide.querySelector('.section-title');
+      if (section) return section.textContent.replace(/\s+/g, ' ').trim();
+      if (slide.classList.contains('slide-cover')) return 'Bìa';
+      if (slide.id === 'slide-toc') return 'Nội dung trình bày';
+      if (slide.classList.contains('slide-closing')) return 'Cảm ơn';
+      return `Slide ${index + 1}`;
+    }
+
+    const TOC_GROUPS = [
+      {
+        roman: 'I',
+        title: 'Tổng quan',
+        variant: 'overview',
+        items: [
+          { id: 'slide-context' },
+          { id: 'slide-content' },
+          { id: 'slide-benefits' },
+          { id: 'slide-scope' },
+          { id: 'slide-flow' },
+          { id: 'slide-fast' },
+        ],
+      },
+      {
+        roman: 'II',
+        title: 'Tính năng nổi bật',
+        variant: 'features',
+        items: [
+          { id: 'slide-dispatch' },
+          { id: 'slide-driver' },
+          { id: 'slide-supervisor-flow' },
+          { id: 'slide-supervisor-flow-2' },
+        ],
+      },
+      {
+        roman: 'III',
+        title: 'Hướng phát triển',
+        variant: 'roadmap',
+        headingLink: 'slide-roadmap',
+      },
+    ];
+
+    function getSlideIndexById(id) {
+      return slides.findIndex((slide) => slide.id === id);
+    }
+
+    function buildToc() {
+      const tocLayout = document.getElementById('toc-layout');
+      if (!tocLayout) return;
+      tocLayout.innerHTML = '';
+
+      TOC_GROUPS.forEach((group) => {
+        const section = document.createElement('section');
+        section.className = `toc-section toc-section-${group.variant} reveal`;
+
+        if (group.headingLink) {
+          const slideIndex = getSlideIndexById(group.headingLink);
+          if (slideIndex < 0) return;
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'toc-section-head is-link';
+          btn.innerHTML = `<span class="toc-roman">${group.roman}.</span> ${group.title}`;
+          btn.setAttribute('aria-label', `Đi tới: ${group.title}`);
+          btn.addEventListener('click', () => goToSlide(slideIndex));
+          section.appendChild(btn);
+        } else {
+          const heading = document.createElement('h2');
+          heading.className = 'toc-section-head';
+          heading.innerHTML = `<span class="toc-roman">${group.roman}.</span> ${group.title}`;
+          section.appendChild(heading);
+
+          const list = document.createElement('ol');
+          list.className = 'toc-list';
+
+          group.items.forEach(({ id }, idx) => {
+            const slideIndex = getSlideIndexById(id);
+            if (slideIndex < 0) return;
+            const slide = slides[slideIndex];
+            const label = getSlideLabel(slide, slideIndex);
+            const num = idx + 1;
+
+            const li = document.createElement('li');
+            li.className = 'toc-item';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'toc-link';
+            btn.dataset.index = String(slideIndex);
+            btn.setAttribute('aria-label', `Đi tới: ${label}`);
+            btn.innerHTML = `<span class="toc-num">${num}</span><span class="toc-label">${label}</span>`;
+            btn.addEventListener('click', () => goToSlide(slideIndex));
+            li.appendChild(btn);
+            list.appendChild(li);
+          });
+
+          section.appendChild(list);
+        }
+
+        tocLayout.appendChild(section);
+      });
+    }
+
+    function buildOverviewTiles() {
+      if (!overviewGrid || overviewBuilt) return;
+      overviewGrid.innerHTML = '';
+      slides.forEach((slide, i) => {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'slide-tile';
+        tile.dataset.index = String(i);
+        tile.setAttribute('aria-label', `Slide ${i + 1}: ${getSlideLabel(slide, i)}`);
+
+        const preview = document.createElement('div');
+        preview.className = 'slide-tile-preview';
+
+        const scaleWrap = document.createElement('div');
+        scaleWrap.className = 'slide-tile-scale';
+
+        const clone = slide.cloneNode(true);
+        clone.classList.add('slide-export-clone', 'slide-tile-clone');
+        clone.removeAttribute('id');
+        clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+        scaleWrap.appendChild(clone);
+        preview.appendChild(scaleWrap);
+
+        const label = document.createElement('span');
+        label.className = 'slide-tile-label';
+        label.innerHTML = `<span class="slide-tile-num">${i + 1}.</span>${getSlideLabel(slide, i)}`;
+
+        tile.append(preview, label);
+        tile.addEventListener('click', () => {
+          goToSlide(i);
+          closeOverview();
+        });
+        overviewGrid.appendChild(tile);
+      });
+      overviewBuilt = true;
+    }
+
+    function scaleTilePreviews() {
+      overviewGrid?.querySelectorAll('.slide-tile-preview').forEach((preview) => {
+        const scaleWrap = preview.querySelector('.slide-tile-scale');
+        if (!scaleWrap) return;
+        const w = preview.clientWidth;
+        const scale = w / TILE_REF_W;
+        scaleWrap.style.transform = `scale(${scale})`;
+        preview.style.height = `${TILE_REF_H * scale}px`;
+      });
+    }
+
+    function updateOverviewHighlight() {
+      overviewGrid?.querySelectorAll('.slide-tile').forEach((tile, i) => {
+        tile.classList.toggle('is-current', i === currentIndex);
+      });
+    }
+
+    function openOverview() {
+      if (!overview) return;
+      buildOverviewTiles();
+      overviewOpen = true;
+      overview.hidden = false;
+      overview.setAttribute('aria-hidden', 'false');
+      overview.classList.add('is-open');
+      requestAnimationFrame(() => {
+        scaleTilePreviews();
+        updateOverviewHighlight();
+        overviewGrid?.querySelector('.slide-tile.is-current')?.scrollIntoView({ block: 'nearest' });
+      });
+    }
+
+    function closeOverview() {
+      if (!overview) return;
+      overviewOpen = false;
+      overview.classList.remove('is-open');
+      overview.hidden = true;
+      overview.setAttribute('aria-hidden', 'true');
+    }
+
+    btnGoto?.addEventListener('click', openOverview);
+    indicator.addEventListener('click', openOverview);
+    btnOverviewClose?.addEventListener('click', closeOverview);
+    overviewBackdrop?.addEventListener('click', closeOverview);
+    window.addEventListener('resize', () => {
+      if (overviewOpen) scaleTilePreviews();
+    });
+
+    btnPrev.addEventListener('click', () => goToSlide(currentIndex - 1));
+    btnNext.addEventListener('click', () => goToSlide(currentIndex + 1));
+
+    const printRoot = document.getElementById('print-root');
+    const PRINT_W_MM = 297;
+    const PRINT_H_MM = 167;
+    const MM_TO_PX = 96 / 25.4;
+
+    function waitFrames(n = 2) {
+      return new Promise((resolve) => {
+        let count = 0;
+        const tick = () => {
+          count += 1;
+          if (count >= n) resolve();
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+    }
+
+    function cloneSlideForExport(slide, w, h) {
+      const clone = slide.cloneNode(true);
+      clone.classList.add('slide-export-clone', 'print-slide-clone');
+      clone.removeAttribute('id');
+      clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+      clone.style.width = `${w}px`;
+      clone.style.height = `${h}px`;
+      clone.style.minWidth = `${w}px`;
+      clone.style.minHeight = `${h}px`;
+      clone.style.maxWidth = `${w}px`;
+      clone.style.maxHeight = `${h}px`;
+      return clone;
+    }
+
+    async function buildPrintRoot() {
+      if (!printRoot) return;
+      closeOverview();
+      printRoot.innerHTML = '';
+
+      const savedIndex = currentIndex;
+      const captureW = window.innerWidth;
+      const captureH = window.innerHeight;
+      const pageW = PRINT_W_MM * MM_TO_PX;
+      const pageH = PRINT_H_MM * MM_TO_PX;
+      const scale = Math.min(pageW / captureW, pageH / captureH);
+
+      slides.forEach((slide) => slide.classList.add('visible'));
+
+      for (let i = 0; i < slides.length; i += 1) {
+        goToSlide(i, false);
+        await waitFrames(3);
+
+        const slide = slides[i];
+        const rect = slide.getBoundingClientRect();
+        const w = Math.round(rect.width) || captureW;
+        const h = Math.round(rect.height) || captureH;
+
+        const page = document.createElement('div');
+        page.className = 'print-page';
+
+        const scaleWrap = document.createElement('div');
+        scaleWrap.className = 'print-page-scale';
+        scaleWrap.style.width = `${w}px`;
+        scaleWrap.style.height = `${h}px`;
+        scaleWrap.style.transform = `scale(${scale})`;
+
+        scaleWrap.appendChild(cloneSlideForExport(slide, w, h));
+        page.appendChild(scaleWrap);
+        printRoot.appendChild(page);
+      }
+
+      goToSlide(savedIndex, false);
+    }
+
+    function teardownPrintRoot() {
+      if (printRoot) printRoot.innerHTML = '';
+      document.body.classList.remove('is-printing');
+      if (btnExportPdf) {
+        btnExportPdf.disabled = false;
+        const label = btnExportPdf.querySelector('span:last-child');
+        if (label) label.textContent = 'PDF';
+      }
+    }
+
+    async function exportPdf() {
+      if (!printRoot || btnExportPdf?.disabled) return;
+      closeOverview();
+      if (btnExportPdf) {
+        btnExportPdf.disabled = true;
+        const label = btnExportPdf.querySelector('span:last-child');
+        if (label) label.textContent = 'Đang tạo…';
+      }
+
+      try {
+        await buildPrintRoot();
+        document.body.classList.add('is-printing');
+
+        const cleanup = () => {
+          teardownPrintRoot();
+          window.removeEventListener('afterprint', cleanup);
+        };
+        window.addEventListener('afterprint', cleanup);
+
+        await waitFrames(2);
+        window.print();
+      } catch (_) {
+        teardownPrintRoot();
+      }
+    }
+
+    btnExportPdf?.addEventListener('click', () => { exportPdf(); });
+
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+
+    async function toggleFullscreen() {
+      try {
+        const root = document.documentElement;
+        if (!isFullscreen()) {
+          if (root.requestFullscreen) await root.requestFullscreen();
+          else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
+        } else if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } catch (_) { /* user gesture / browser policy */ }
+    }
+
+    function updateFullscreenBtn() {
+      if (!btnFullscreen) return;
+      const on = isFullscreen();
+      document.documentElement.classList.toggle('is-presentation-fullscreen', on);
+      btnFullscreen.classList.toggle('is-fullscreen', on);
+      btnFullscreen.setAttribute('aria-label', on ? 'Thoát toàn màn hình' : 'Thuyết trình toàn màn hình');
+      btnFullscreen.title = on ? 'Thoát toàn màn hình (F / Esc)' : 'Toàn màn hình (F)';
+      const label = btnFullscreen.querySelector('.fs-label');
+      const icon = btnFullscreen.querySelector('.fs-icon');
+      if (label) label.textContent = on ? 'Thoát' : 'Toàn màn hình';
+      if (icon) icon.textContent = on ? '⤢' : '⛶';
+    }
+
+    btnFullscreen?.addEventListener('click', toggleFullscreen);
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach((ev) => {
+      document.addEventListener(ev, updateFullscreenBtn);
+    });
+    updateFullscreenBtn();
+
+    document.addEventListener('keydown', (e) => {
+      if (overviewOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeOverview();
+        }
+        return;
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+        return;
+      }
+      if (e.key === 'g' || e.key === 'G') {
+        e.preventDefault();
+        openOverview();
+        return;
+      }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault();
+        goToSlide(currentIndex + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        goToSlide(currentIndex - 1);
+      }
+    });
+
+    slides.forEach((slide, i) => {
+      const obs = new IntersectionObserver(([e]) => {
+        if (e.isIntersecting) {
+          slide.classList.add('visible');
+          currentIndex = i;
+          saveSlideIndex(currentIndex);
+          updateNav();
+        }
+      }, { threshold: 0.5 });
+      obs.observe(slide);
+    });
+
+    buildToc();
+    goToSlide(currentIndex, false);
+    slides[currentIndex]?.classList.add('visible');
+  </script>
+</body>
+</html>
