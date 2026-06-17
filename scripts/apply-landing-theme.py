@@ -209,27 +209,27 @@ LANDING_CSS = """
 """
 
 BACKGROUNDS = {
-    "slide-toc": "becatruck-assets/cover-bg.jpeg",
-    "slide-context": "becatruck-assets/pdf/page01-img1.jpeg",
-    "slide-content": "becatruck-assets/cover-slide-bg.jpeg",
-    "slide-benefits": "becatruck-assets/cover-bg.jpeg",
-    "slide-scope": "becatruck-assets/pdf/page01-img1.jpeg",
-    "slide-flow": "becatruck-assets/cover-bg.jpeg",
-    "slide-fast": "becatruck-assets/cover-slide-bg.jpeg",
-    "slide-section-features": "becatruck-assets/pdf/page08-img1.png",
-    "slide-dispatch": "becatruck-assets/pdf/page09-img1.png",
-    "slide-driver": "becatruck-assets/pdf/page11-img1.jpeg",
-    "slide-supervisor-flow": "becatruck-assets/pdf/page13-img1.jpeg",
-    "slide-supervisor-flow-2": "becatruck-assets/pdf/page14-img1.jpeg",
-    "slide-roadmap": "becatruck-assets/cover-bg.jpeg",
+    "slide-toc": "becamex-assets/cover-bg.jpeg",
+    "slide-context": "becamex-assets/pdf/page01-img1.jpeg",
+    "slide-content": "becamex-assets/cover-slide-bg.jpeg",
+    "slide-benefits": "becamex-assets/cover-bg.jpeg",
+    "slide-scope": "becamex-assets/pdf/page01-img1.jpeg",
+    "slide-flow": "becamex-assets/cover-bg.jpeg",
+    "slide-fast": "becamex-assets/cover-slide-bg.jpeg",
+    "slide-section-features": "becamex-assets/pdf/page08-img1.png",
+    "slide-dispatch": "becamex-assets/pdf/page09-img1.png",
+    "slide-driver": "becamex-assets/pdf/page11-img1.jpeg",
+    "slide-supervisor-flow": "becamex-assets/pdf/page13-img1.jpeg",
+    "slide-supervisor-flow-2": "becamex-assets/pdf/page14-img1.jpeg",
+    "slide-roadmap": "becamex-assets/cover-bg.jpeg",
 }
 
 SHOWCASES = {
-    "slide-context": "becatruck-assets/pdf/page08-img1.png",
-    "slide-content": "becatruck-assets/pdf/page09-img1.png",
-    "slide-benefits": "becatruck-assets/pdf/page11-img2.jpeg",
-    "slide-scope": "becatruck-assets/pdf/page13-img2.jpeg",
-    "slide-fast": "becatruck-assets/pdf/page08-img1.png",
+    "slide-context": "becamex-assets/pdf/page08-img1.png",
+    "slide-content": "becamex-assets/pdf/page09-img1.png",
+    "slide-benefits": "becamex-assets/pdf/page11-img2.jpeg",
+    "slide-scope": "becamex-assets/pdf/page13-img2.jpeg",
+    "slide-fast": "becamex-assets/pdf/page08-img1.png",
 }
 
 
@@ -274,11 +274,11 @@ def main() -> int:
     )
     html = html.replace(
         "<div class=\"cover-main reveal\">",
-        '<div class="cover-main reveal">\n        <p class="landing-hero-kicker">BecaTruck Platform</p>',
+        '<div class="cover-main reveal">\n        <p class="landing-hero-kicker">BECAMEX</p>',
     )
     html = html.replace(
-        '<p class="cover-subtitle">Giải pháp số hóa vận hành đội xe</p>',
-        '<p class="cover-subtitle">Giải pháp số hóa vận hành đội xe</p>\n        <p class="landing-hero-cta">Cuộn hoặc bấm Tiếp để khám phá sản phẩm →</p>',
+        '<p class="cover-subtitle">Phụ đề slide bìa</p>',
+        '<p class="cover-subtitle">Phụ đề slide bìa</p>\n        <p class="landing-hero-cta">Cuộn hoặc bấm Tiếp để khám phá →</p>',
     )
 
     html = html.replace("  </style>", f"{LANDING_CSS}\n  </style>", 1)

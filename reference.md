@@ -3,7 +3,7 @@
 ## File mẫu
 
 - HTML: `template/deck.html` (trong thư mục skill `~/.cursor/skills/becamex-slide/`)
-- Assets: copy từ `template/becatruck-assets/` bằng `scripts/copy-assets.sh {output-dir}` — xem `template/assets/README.md`
+- Assets: copy từ `template/becamex-assets/` bằng `scripts/copy-assets.sh {output-dir}` — xem `template/assets/README.md`
 - Cài skill: `bash scripts/install.sh` · Đóng gói: `bash scripts/package.sh`
 
 ## CSS variables
@@ -159,8 +159,8 @@ Copy đầy đủ media queries từ file mẫu `slide-quan-ly-doi-xe.html`.
 
 ```html
 <section class="slide slide-cover" id="slide-cover">
-  <img class="cover-bg" src="becatruck-assets/cover-slide-bg.png" alt="" />
-  <img class="cover-logo" src="becatruck-assets/cover-logo.png" alt="BECAMEX GROUP" />
+  <img class="cover-bg" src="becamex-assets/cover-slide-bg.png" alt="" />
+  <img class="cover-logo" src="becamex-assets/cover-logo.png" alt="BECAMEX GROUP" />
   <div class="cover-content">
     <div class="cover-main reveal">
       <h1 class="cover-title">DÒNG 1<br />DÒNG 2</h1>
@@ -185,7 +185,7 @@ Copy đầy đủ media queries từ file mẫu `slide-quan-ly-doi-xe.html`.
 
 ```html
 <section class="slide slide-closing" id="slide-closing">
-  <img class="cover-bg" src="becatruck-assets/cover-slide-bg.png" alt="" />
+  <img class="cover-bg" src="becamex-assets/cover-slide-bg.png" alt="" />
   <div class="closing-content">
     <h2 class="closing-title reveal">Cảm ơn!</h2>
   </div>
@@ -241,7 +241,7 @@ Mở rộng deck: khi thêm slide mới **trước** slide kết — giữ `#sli
   <header class="header">
     <div class="title-row reveal">
       <h1 class="title-badge">
-        <img class="title-chevron" src="becatruck-assets/chevron.png" alt="" />
+        <img class="title-chevron" src="becamex-assets/chevron.png" alt="" />
         Tiêu đề slide
       </h1>
     </div>
@@ -305,7 +305,7 @@ Màu icon-wrap: `c1` cam, `c2` tím, `c3` peach, `c4` lavender. Số badge: `car
 <footer class="slide-footer">
   <span class="slide-number">2</span>
   <span class="footer-divider" aria-hidden="true"></span>
-  <img class="footer-logo" src="becatruck-assets/becamex-logo.png" alt="BECAMEX GROUP" />
+  <img class="footer-logo" src="becamex-assets/becamex-logo.png" alt="BECAMEX GROUP" />
 </footer>
 ```
 
@@ -424,7 +424,7 @@ Sau khi thêm `<section class="slide">`:
 Phát triển với đường dẫn tương đối:
 
 ```html
-<img src="becatruck-assets/chevron.png" alt="" />
+<img src="becamex-assets/chevron.png" alt="" />
 ```
 
 Chia sẻ: chạy `scripts/bundle-html.py` → thay bằng `src="data:image/png;base64,..."`.
@@ -471,8 +471,8 @@ Class clone: `.slide-export-clone` + `.print-slide-clone` (tắt reveal animatio
 
 ```html
 <div class="integration-flow reveal">
-  <div class="system-frame becatruck">
-    <div class="system-head">Hệ thống quản lý đội xe</div>
+  <div class="system-frame becamex-system">
+    <div class="system-head">Hệ thống A</div>
     <div class="system-body">
       <div class="system-action export">Kết xuất dữ liệu</div>
     </div>
@@ -534,7 +534,7 @@ Dùng stroke đơn giản 24×24, `stroke-width="1.8"`, màu khớp class card (
 
 ## Slide giới thiệu khách hàng (từ PDF)
 
-Ảnh giao diện lưu tại `becatruck-assets/pdf/pageNN-imgM.{png,jpeg}` — trích bằng `scripts/extract-pdf.py`.
+Ảnh giao diện lưu tại `becamex-assets/pdf/pageNN-imgM.{png,jpeg}` — trích bằng `scripts/extract-pdf.py`.
 
 | Slide | Nội dung | Ảnh / diagram |
 |-------|----------|----------------|

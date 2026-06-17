@@ -2,33 +2,31 @@
 
 ## Nguyên tắc
 
-- **Ảnh screenshot** từ PDF/PPT → giữ nguyên file trong `becatruck-assets/pdf/`
-- **Flowchart** (swimlane, FAST, bước nghiệp vụ) → vẽ lại bằng HTML/CSS trong slide, không chụp ảnh flow từ PDF (dễ vỡ layout, khó scale)
-- **Khung flow** (`.lane`, `.system-frame`, `.flow-box`) → `height: auto`, ôm theo nội dung; slide full màn hình nhưng không giãn ép khung rỗng (xem SKILL.md)
-- **Mũi tên ngang** (`.lane-arrow`, `.integration-arrow`) → `align-self: start`, `min-height` khớp header (`.lane-head` / `.system-head`), không căn giữa cột
+- **Screenshot** sản phẩm → file riêng trong `becamex-assets/screenshots/` hoặc `pdf/`
+- **Flowchart** (swimlane, tích hợp, bước nghiệp vụ) → vẽ lại HTML/CSS, không chụp ảnh flow (khó scale)
+- **Khung flow** → `height: auto`, ôm nội dung; slide full màn hình, không giãn khung rỗng
+- **Mũi tên ngang** → `align-self: start`, căn theo header lane/system
 
-## Phương án vẽ lại (đã áp dụng trong mẫu)
+## Layout pattern
 
-| Loại | Class HTML | Nguồn nội dung |
-|------|------------|----------------|
-| Swimlane 3 vai trò | `.swimlane` + `.lane` | PDF p.4, 7, 10 — Điều xe / Tài xế / Giám sát |
-| Luồng FAST (2 hệ thống) | `.integration-flow` + `.system-frame` | PDF p.5 — BecaTruck kết xuất → FAST import |
-| Bước ngang (4–6 bước) | `.step-strip` | PDF p.11, 13–14 |
+| Loại | Class HTML | Khi dùng |
+|------|------------|----------|
+| Swimlane | `.swimlane` + `.lane` | 3+ vai trò song song |
+| Tích hợp 2 hệ thống | `.integration-flow` + `.system-frame` | Trao đổi dữ liệu A ↔ B |
+| Bước ngang | `.step-strip` | 4–6 bước tuần tự |
 
-Logic tham chiếu Python: `~/Projects/beca-truck-slides/build_pptx.py` (`draw_swimlane`, `draw_fast_integration`, `draw_step_flow`).
-
-## Phương án thay thế (khi cần nâng cấp)
-
-1. **Mermaid** (inline trong HTML + CDN nhẹ) — nhanh cho flow đơn giản; cần theme cam/tím tùy chỉnh
-2. **SVG thủ công** — kiểm soát pixel-perfect, phù hợp slide in/PDF
-3. **draw.io / diagrams.net** — export SVG vào `becatruck-assets/diagrams/` nếu flow phức tạp
-4. **`build_pptx.py`** — tái dùng cho xuất PowerPoint; HTML mirror cùng cấu trúc node
+Markup mẫu: [reference.md](reference.md) · `template/deck.html`
 
 ## Trích ảnh từ PDF
 
 ```bash
-/Users/caodinhtrihoang/Projects/beca-truck-slides/.venv/bin/python3 \
-  ~/.cursor/skills/becamex-slide/scripts/extract-pdf.py \
-  "/path/to/BaoCaoKetQua_PhanHeQLDoiXe_20250620.pdf" \
-  "./becatruck-assets/pdf"
+python3 scripts/extract-pdf.py /path/to/document.pdf ./becamex-assets/pdf
 ```
+
+Dùng ảnh trích cho `.image-duo` / `.image-quad` — không thay flowchart HTML.
+
+## Phương án khác (tùy chọn)
+
+1. **Mermaid** + theme cam/tím
+2. **SVG** thủ công — pixel-perfect
+3. **draw.io** → export SVG vào `becamex-assets/diagrams/`

@@ -20,11 +20,11 @@ import tempfile
 from pathlib import Path
 
 SRC_HREF_RE = re.compile(
-    r'(?P<attr>src|href)=(["\'])((?:\./)?becatruck-assets/[^"\']+)\2',
+    r'(?P<attr>src|href)=(["\'])((?:\./)?becamex-assets/[^"\']+)\2',
     re.IGNORECASE,
 )
 CSS_URL_RE = re.compile(
-    r'url\((["\']?)((?:\./)?becatruck-assets/[^"\')\s]+)\1\)',
+    r'url\((["\']?)((?:\./)?becamex-assets/[^"\')\s]+)\1\)',
     re.IGNORECASE,
 )
 
@@ -133,7 +133,7 @@ def resolve_asset(rel: str, html_dir: Path, assets_dir: Path | None) -> Path | N
     rel = rel.removeprefix("./")
     candidates = [html_dir / rel]
     if assets_dir is not None:
-        suffix = rel.removeprefix("becatruck-assets/").lstrip("/")
+        suffix = rel.removeprefix("becamex-assets/").lstrip("/")
         candidates.append(assets_dir / suffix)
         candidates.append(assets_dir.parent / rel)
     for candidate in candidates:
@@ -196,11 +196,11 @@ def replace_asset_refs(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Nhúng becatruck-assets vào HTML (1 file, ảnh nén base64)."
+        description="Nhúng becamex-assets vào HTML (1 file, ảnh nén base64)."
     )
     parser.add_argument("html", type=Path, help="File HTML nguồn")
     parser.add_argument("-o", "--output", type=Path, help="File HTML đích")
-    parser.add_argument("--assets", type=Path, default=None, help="Thư mục becatruck-assets")
+    parser.add_argument("--assets", type=Path, default=None, help="Thư mục becamex-assets")
     parser.add_argument(
         "--max-width",
         type=int,
@@ -228,7 +228,7 @@ def main() -> int:
     html_dir = html_path.parent
     assets_dir = args.assets
     if assets_dir is None:
-        default_assets = html_dir / "becatruck-assets"
+        default_assets = html_dir / "becamex-assets"
         assets_dir = default_assets if default_assets.is_dir() else None
     elif assets_dir.is_dir():
         assets_dir = assets_dir.resolve()

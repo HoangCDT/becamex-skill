@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract text summary + embedded images + page PNGs from BecaTruck PDF."""
+"""Extract text summary + embedded images + page PNGs from a PDF."""
 import sys
 from pathlib import Path
 

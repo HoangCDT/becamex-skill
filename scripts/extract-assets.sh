@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Extract BECAMEX brand PNGs from BecaTruck PPT template.
+# Extract BECAMEX brand PNGs from a PPT template.
 # Usage: extract-assets.sh <path-to.pptx> <output-dir>
 
 set -euo pipefail

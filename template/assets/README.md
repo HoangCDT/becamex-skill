@@ -1,55 +1,41 @@
 # Assets cho deck Becamex
 
-## Asset thương hiệu (đã có sẵn trong skill)
+## Bundle thương hiệu (trong skill)
 
-Skill đã **bundle sẵn** 4 file PNG chuẩn BECAMEX (deck truck management / BaoCaoKetQua) tại `template/becatruck-assets/`:
-
-| File | Kích thước tham chiếu | Mô tả |
-|------|----------------------|--------|
-| `chevron.png` | ~4.5 KB | Chevron cam header — từ PPT `image4.png` |
-| `becamex-logo.png` | ~92 KB | Logo footer / section — từ PPT `image7.png` |
-| `cover-logo.png` | ~44 KB | Logo góc trái trên slide bìa |
-| `cover-slide-bg.png` | ~1.2 MB | Nền slide bìa + slide cảm ơn (ảnh thật) |
-
-Nếu file logo/chevron < 1 KB → **sai**, đã bị thay bằng placeholder — phải copy lại từ bundle skill.
-
-**Luôn copy từ skill** — không tự vẽ SVG, không trích PPT trừ khi user yêu cầu thay thế:
-
-```bash
-bash scripts/copy-assets.sh /path/to/output-deck
-# → tạo /path/to/output-deck/becatruck-assets/ với 4 file trên
-```
-
-Hoặc thủ công:
-
-```bash
-cp -R template/becatruck-assets /path/to/output-deck/
-```
-
-Chỉ thay file khi user **cung cấp ảnh bìa/logo mới** — khi đó ghi đè `cover-slide-bg.png` hoặc `cover-logo.png`.
-
-## Asset bổ sung (tùy deck)
+`template/becamex-assets/` — copy sang mọi deck output:
 
 | File | Mô tả |
 |------|--------|
-| `pdf/*.jpeg` | Screenshot giao diện — trích bằng `scripts/extract-pdf.py` |
-| `screenshots/*` | Ảnh sản phẩm do user cung cấp |
-
-## Trích từ PPT (fallback, không khuyến nghị)
-
-Chỉ dùng khi skill chưa cài hoặc cần asset mới từ file PPT khác:
+| `chevron.png` | Chevron cam — header `.title-badge` |
+| `becamex-logo.png` | Logo footer / section |
+| `cover-logo.png` | Logo góc trái slide bìa |
+| `cover-slide-bg.png` | Nền bìa + slide cảm ơn |
 
 ```bash
-bash scripts/extract-assets.sh /path/to/template.pptx ./becatruck-assets
+bash scripts/copy-assets.sh /path/to/output-deck
+# → /path/to/output-deck/becamex-assets/
 ```
 
-## Đường dẫn trong HTML
+Logo/chevron hợp lệ thường > 1 KB. Không tự vẽ placeholder.
 
-Luôn dùng đường dẫn tương đối:
+## Asset theo dự án (user cung cấp)
+
+| Thư mục | Mô tả |
+|---------|--------|
+| `screenshots/` | Ảnh giao diện, sản phẩm |
+| `pdf/` | Ảnh trích từ PDF (`scripts/extract-pdf.py`) |
+
+## Đường dẫn HTML
 
 ```html
-<img src="becatruck-assets/chevron.png" alt="" />
-<img src="becatruck-assets/cover-slide-bg.png" alt="" />
-<img src="becatruck-assets/cover-logo.png" alt="" />
-<img src="becatruck-assets/becamex-logo.png" alt="" />
+<img src="becamex-assets/chevron.png" alt="" />
+<img src="becamex-assets/becamex-logo.png" alt="" />
 ```
+
+## Fallback PPT
+
+```bash
+bash scripts/extract-assets.sh /path/to/template.pptx ./becamex-assets
+```
+
+Chỉ khi cần asset mới từ file PPT khác — mặc định dùng bundle skill.

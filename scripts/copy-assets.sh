@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-BUNDLED="$SKILL_ROOT/template/becatruck-assets"
+BUNDLED="$SKILL_ROOT/template/becamex-assets"
 OUT="${1:-.}"
 
 if [ ! -d "$BUNDLED" ]; then
@@ -12,7 +12,7 @@ if [ ! -d "$BUNDLED" ]; then
   exit 1
 fi
 
-DEST="$OUT/becatruck-assets"
+DEST="$OUT/becamex-assets"
 mkdir -p "$DEST"
 
 for f in chevron.png becamex-logo.png cover-logo.png cover-slide-bg.png; do
