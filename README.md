@@ -28,8 +28,8 @@ cp -R becamex-slide ~/.cursor/skills/
 ### Cách 4 — Clone từ GitHub
 
 ```bash
-git clone https://github.com/caodinhtrihoang/becamex-slide.git
-cd becamex-slide
+git clone https://github.com/HoangCDT/becamex-skill.git
+cd becamex-skill
 bash scripts/install.sh all
 ```
 
