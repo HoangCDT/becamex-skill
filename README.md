@@ -25,14 +25,6 @@ mkdir -p ~/.cursor/skills
 cp -R becamex-slide ~/.cursor/skills/
 ```
 
-### Cách 4 — Clone từ GitHub
-
-```bash
-git clone https://github.com/HoangCDT/becamex-skill.git
-cd becamex-skill
-bash scripts/install.sh all
-```
-
 ### Cách 3 — Chia sẻ file zip
 
 ```bash
@@ -41,6 +33,13 @@ bash scripts/package.sh
 ```
 
 Giải nén, rồi chạy `bash scripts/install.sh` hoặc copy thư mục vào `~/.cursor/skills/`.
+### Cách 4 — Clone từ GitHub
+
+```bash
+git clone https://github.com/HoangCDT/becamex-skill.git
+cd becamex-skill
+bash scripts/install.sh all
+```
 
 ## Dùng với Cursor Agent
 
